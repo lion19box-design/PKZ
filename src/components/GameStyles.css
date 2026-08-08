@@ -1,0 +1,246 @@
+* {
+  box-sizing: border-box;
+}
+
+.game-container {
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  background-image: url('/assets/chgk-asset-main-menu-16on9.PNG');
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #fff;
+  font-family: var(--font-sans);
+}
+
+.game-header {
+  height: 80px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+  border-bottom: 2px solid var(--accent-gold);
+  z-index: 2;
+}
+
+/* Scoreboard */
+.scoreboard {
+  display: flex;
+  gap: 20px;
+  background: rgba(0,0,0,0.85);
+  padding: 10px 40px;
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
+  border: 1px solid var(--accent-gold);
+  border-top: none;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  z-index: 20;
+  overflow: hidden;
+  font-family: var(--font-serif);
+}
+
+.score-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 20px;
+  min-width: 120px;
+}
+
+.score-panel.experts {
+  border-right: 2px solid var(--accent-gold);
+}
+
+.score-label {
+  font-size: 1.2rem;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.score-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--accent-gold);
+}
+
+.score-controls {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.score-controls button {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid var(--accent-gold);
+  color: #fff;
+  border-radius: 4px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: 0.2s;
+}
+
+.score-controls button:hover {
+  background: var(--accent-gold);
+  color: #000;
+}
+
+.game-body {
+  flex: 1;
+  display: flex;
+  padding: 20px;
+  gap: 20px;
+  z-index: 1;
+}
+
+.side-panel {
+  width: 350px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.main-stage {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 12px;
+  backdrop-filter: blur(3px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8);
+}
+
+/* Glassmorphism helpers for panels */
+.glass-box {
+  background: rgba(15, 15, 15, 0.7);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 8px;
+  padding: 15px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.glass-box h3 {
+  color: var(--accent-gold);
+  margin-bottom: 10px;
+  font-family: var(--font-serif);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+  padding-bottom: 5px;
+}
+
+/* Roulette placeholder styles */
+.roulette-table {
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #2a1b0a 0%, #0a0502 100%);
+  border: 10px solid var(--accent-gold);
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 0 40px rgba(212, 175, 55, 0.2), inset 0 0 50px rgba(0,0,0,1);
+}
+
+.roulette-center {
+  width: 100px;
+  height: 100px;
+  background: url('/assets/chgk-asset-horse.PNG') center/cover;
+  border-radius: 50%;
+  border: 3px solid var(--accent-gold);
+  z-index: 2;
+  /* Animation will be applied dynamically */
+}
+
+/* Sectors mapping */
+.sector {
+  position: absolute;
+  width: 60px;
+  height: 90px;
+  background: #eee;
+  border: 2px solid #333;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  color: #000;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+  top: 50%;
+  left: 50%;
+  margin-top: -45px;
+  margin-left: -30px;
+}
+
+.sector.played {
+  background: #444;
+  color: #888;
+  border-color: #222;
+}
+
+/* Common UI elements */
+.control-btn {
+  background: linear-gradient(180deg, #2a2a2a 0%, #111 100%);
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+  padding: 10px 15px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+  background: linear-gradient(180deg, #3a3a3a 0%, #222 100%);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+}
+
+.control-btn.danger {
+  border-color: #ff4444;
+  color: #ff4444;
+}
+
+.control-btn.danger:hover {
+  background: linear-gradient(180deg, #3a1111 0%, #220000 100%);
+  box-shadow: 0 0 10px rgba(255, 68, 68, 0.4);
+}
+
+.control-btn.primary {
+  background: linear-gradient(180deg, rgba(212, 175, 55, 0.3) 0%, rgba(139, 115, 36, 0.3) 100%);
+  color: #fff;
+  border: 1px solid var(--accent-gold);
+}
+
+.control-btn.primary:hover {
+  background: linear-gradient(180deg, rgba(212, 175, 55, 0.5) 0%, rgba(139, 115, 36, 0.5) 100%);
+}
+
+@media (max-width: 1100px) {
+  .app-container::after {
+    content: "Элитарный клуб доступен только с ПК или ноутбука (широкий экран). Пожалуйста, переверните устройство или зайдите с компьютера.";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #000;
+    color: var(--accent-gold);
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    text-align: center;
+    font-size: 1.5rem;
+    font-family: 'Times New Roman', serif;
+  }
+}

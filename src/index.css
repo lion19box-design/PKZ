@@ -1,0 +1,94 @@
+:root {
+  /* Цветовая палитра - Элитарное Казино 90-х */
+  --bg-color: #0b0c10;
+  --panel-bg: rgba(20, 20, 25, 0.85);
+  --accent-gold: #d4af37;
+  --accent-gold-glow: rgba(212, 175, 55, 0.6);
+  --text-main: #f0e6d2;
+  --text-muted: #a39b8b;
+  
+  --table-red: #5c1616;
+  --table-dark: #2a0a0a;
+
+  --border-radius: 8px;
+  --transition-smooth: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+  /* Шрифты */
+  --font-serif: 'Playfair Display', serif; /* Для заголовков и вопросов */
+  --font-mono: 'Roboto Mono', monospace;   /* Для таймеров и логов */
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: var(--font-serif);
+  overflow: hidden; /* Игра строго 16:9, без скролла */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+/* Контейнер приложения - строго 16:9 */
+.app-container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at center, #1a1a24 0%, var(--bg-color) 100%);
+}
+
+/* --- ЭЛТ ФИЛЬТР (CRT Effect) --- */
+.crt-overlay {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  background-size: 100% 2px, 3px 100%;
+  box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+}
+
+.crt-overlay::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: rgba(18, 16, 16, 0.1);
+  opacity: 0;
+  z-index: 9999;
+  pointer-events: none;
+  animation: flicker 0.15s infinite;
+}
+
+@keyframes flicker {
+  0% { opacity: 0.05; }
+  50% { opacity: 0.02; }
+  100% { opacity: 0.07; }
+}
+/* --- КОНЕЦ ЭЛТ ФИЛЬТРА --- */
+
+/* Временный экран */
+.temp-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: 3rem;
+  text-shadow: 0 0 10px var(--accent-gold-glow);
+  color: var(--accent-gold);
+}

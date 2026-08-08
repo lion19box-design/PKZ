@@ -1,0 +1,282 @@
+.profile-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  padding: 20px;
+}
+
+.profile-panel {
+  width: 100%;
+  max-width: 800px;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.profile-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--accent-gold);
+  color: var(--text-light);
+  padding: 10px 20px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1.1rem;
+  transition: all 0.3s;
+}
+
+.tab-btn.active, .tab-btn:hover {
+  background: var(--accent-gold);
+  color: var(--bg-dark);
+}
+
+.fitting-room {
+  display: flex;
+  flex: 1;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.avatar-preview-section {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+}
+
+.avatar-preview {
+  position: relative;
+  width: 200px;
+  height: 200px;
+}
+
+.avatar-circle {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  border: 4px solid var(--accent-gold);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+
+.inventory-section {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.inventory-section h3 {
+  color: var(--accent-gold);
+  margin-bottom: 10px;
+  margin-top: 20px;
+}
+
+.inventory-section h3:first-child {
+  margin-top: 0;
+}
+
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 10px;
+}
+
+.inventory-item {
+  width: 80px;
+  height: 80px;
+  background: rgba(255,255,255,0.1);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.inventory-item:hover {
+  border-color: rgba(255, 215, 0, 0.5);
+}
+
+.inventory-item.equipped {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  background: rgba(255,215,0,0.2);
+}
+
+.inventory-item img {
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+}
+
+.no-hat {
+  font-size: 0.8rem;
+  color: #ccc;
+  text-align: center;
+}
+
+/* Achievements */
+.achievements-room {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.stats-panel {
+  display: flex;
+  justify-content: space-around;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+}
+
+.stat-box {
+  font-size: 1.2rem;
+}
+
+.stat-box span {
+  font-weight: bold;
+  font-size: 1.5rem;
+  margin-left: 10px;
+}
+
+.awards-title {
+  text-align: center;
+  color: var(--accent-gold);
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+}
+
+.awards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  text-align: center;
+}
+
+.award-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.5s;
+}
+
+.award-item img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  margin-bottom: 10px;
+  transition: all 0.5s;
+}
+
+.award-item p {
+  color: var(--accent-gold);
+  font-size: 1.1rem;
+}
+
+.award-item.locked {
+  filter: grayscale(100%) brightness(0.2);
+}
+
+.award-item.locked p {
+  color: #666;
+}
+
+.award-item.unlocked img {
+  filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
+}
+
+/* Ceremony Modal */
+.award-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 1s;
+}
+
+.award-modal-content {
+  background: linear-gradient(135deg, #2a0800 0%, #1a0000 100%);
+  border: 3px solid var(--accent-gold);
+  border-radius: 15px;
+  padding: 40px;
+  text-align: center;
+  max-width: 600px;
+  box-shadow: 0 0 50px rgba(255, 215, 0, 0.4);
+}
+
+.award-title {
+  color: var(--accent-gold);
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.award-ceremony-img {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255,215,0,0.3);
+  box-shadow: 0 0 20px rgba(0,0,0,0.8);
+}
+
+.award-name {
+  color: #fff;
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+}
+
+.award-desc {
+  font-size: 1.2rem;
+  line-height: 1.5;
+  color: #ccc;
+  margin-bottom: 30px;
+  font-style: italic;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* VHS TV Ghosting Transition for Hats */
+@keyframes vhsGhosting {
+  0% { opacity: 0; filter: blur(4px) drop-shadow(0 0 10px rgba(255, 255, 255, 0.8)); }
+  30% { opacity: 0.4; filter: blur(2px) drop-shadow(0 0 5px rgba(255, 255, 255, 0.5)); }
+  100% { opacity: 1; filter: blur(0) drop-shadow(0 0 0 rgba(255, 255, 255, 0)); }
+}
+
+.hat-overlay {
+  animation: vhsGhosting 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
