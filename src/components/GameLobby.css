@@ -163,11 +163,23 @@
   padding: 15px 30px !important;
   background: rgba(33, 150, 243, 0.2) !important;
   border-color: #2196f3 !important;
+  transition: all 0.3s ease;
 }
 
 .start-game-btn:hover {
   background: rgba(33, 150, 243, 0.5) !important;
   box-shadow: 0 0 20px rgba(33, 150, 243, 0.5);
+}
+
+.start-game-btn.ready {
+  background: rgba(33, 150, 243, 0.9) !important;
+  box-shadow: 0 0 20px rgba(33, 150, 243, 0.8);
+  color: white !important;
+}
+
+.start-game-btn.ready:hover {
+  background: rgba(33, 150, 243, 1) !important;
+  box-shadow: 0 0 30px rgba(33, 150, 243, 1);
 }
 
 .exit-btn {

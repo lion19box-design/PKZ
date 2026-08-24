@@ -99,6 +99,8 @@
   padding: 20px;
   gap: 20px;
   z-index: 1;
+  position: relative;
+  min-height: 0;
 }
 
 .side-panel {
@@ -106,6 +108,7 @@
   display: flex;
   flex-direction: column;
   gap: 15px;
+  min-height: 0;
 }
 
 .main-stage {
@@ -141,24 +144,20 @@
 
 /* Roulette placeholder styles */
 .roulette-table {
-  width: 350px;
-  height: 350px;
+  width: 500px;
+  height: 500px;
+  background: url('/assets/Roulette-asset.png') center/contain no-repeat;
   border-radius: 50%;
-  background: radial-gradient(circle, #2a1b0a 0%, #0a0502 100%);
-  border: 10px solid var(--accent-gold);
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 0 40px rgba(212, 175, 55, 0.2), inset 0 0 50px rgba(0,0,0,1);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
 }
 
 .roulette-center {
-  width: 100px;
-  height: 100px;
-  background: url('/assets/chgk-asset-horse.PNG') center/cover;
-  border-radius: 50%;
-  border: 3px solid var(--accent-gold);
+  width: 300px;
+  height: 300px;
   z-index: 2;
   /* Animation will be applied dynamically */
 }
@@ -168,15 +167,11 @@
   position: absolute;
   width: 60px;
   height: 90px;
-  background: #eee;
-  border: 2px solid #333;
-  border-radius: 4px;
   display: flex;
   justify-content: center;
   align-items: center;
   font-weight: bold;
   color: #000;
-  box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
   top: 50%;
   left: 50%;
   margin-top: -45px;
@@ -184,9 +179,7 @@
 }
 
 .sector.played {
-  background: #444;
-  color: #888;
-  border-color: #222;
+  opacity: 0.6;
 }
 
 /* Common UI elements */
@@ -202,9 +195,18 @@
   transition: all 0.2s ease;
 }
 
-.control-btn:hover {
+.control-btn:hover:not(:disabled):not(.disabled) {
   background: linear-gradient(180deg, #3a3a3a 0%, #222 100%);
   box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+}
+
+.control-btn:disabled,
+.control-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+  filter: grayscale(0.6);
+  box-shadow: none !important;
 }
 
 .control-btn.danger {
@@ -243,4 +245,20 @@
     font-size: 1.5rem;
     font-family: 'Times New Roman', serif;
   }
+}
+.control-btn.success {
+  border-color: #4caf50;
+  color: #4caf50;
+}
+.control-btn.success:hover {
+  background: linear-gradient(180deg, #113a11 0%, #002200 100%);
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+}
+.control-btn.warning {
+  border-color: #ff9800;
+  color: #ff9800;
+}
+.control-btn.warning:hover {
+  background: linear-gradient(180deg, #3a2911 0%, #221300 100%);
+  box-shadow: 0 0 10px rgba(255, 152, 0, 0.4);
 }

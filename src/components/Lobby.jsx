@@ -60,6 +60,8 @@ export default function Lobby() {
       if (response && response.success) {
         if (response.status === 'pending') {
            setIsPending(true);
+        } else if (response.isHost) {
+           navigate(`/host/${joinCode}`);
         } else {
            navigate(`/expert/${joinCode}`);
         }

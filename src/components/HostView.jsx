@@ -17,22 +17,26 @@ export default function HostView() {
   const [playedQuestionsText, setPlayedQuestionsText] = useState('');
   const [penaltiesOpen, setPenaltiesOpen] = useState(false);
   const [hintsOpen, setHintsOpen] = useState(false);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [rulebookOpen, setRulebookOpen] = useState(false);
   const [playerSelectModal, setPlayerSelectModal] = useState({ isOpen: false, type: null });
   const [joinRequestsModal, setJoinRequestsModal] = useState(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
+  const [bbControlsOpen, setBbControlsOpen] = useState(false);
 
   const pendingRequests = room?.joinRequests || [];
   const hasPending = pendingRequests.length > 0;
 
   useEffect(() => {
     let timer;
-    if (room && room.timerEndsAt) {
+    if (room && room.timerEndsAt && room.timerEndsAt > Date.now()) {
       const updateTimer = () => {
         const remaining = Math.max(0, Math.floor((room.timerEndsAt - Date.now()) / 1000));
         setTimeLeft(remaining);
       };
       updateTimer();
-      timer = setInterval(updateTimer, 1000);
+      timer = setInterval(updateTimer, 500);
     } else {
       setTimeLeft(null);
     }
@@ -53,24 +57,27 @@ export default function HostView() {
       return;
     }
 
-    socket.emit('joinRoom', { roomId, username, isHost: true }, (res) => {
-      if (!res || !res.success) {
-        showAlert((res && res.error) || 'Ошибка подключения');
-        navigate('/');
-      } else {
-        setRoom(res.room);
-        setPlayedQuestionsText(res.room.playedQuestionsIds.join(', '));
-        setGameState(res.room.state === 'waiting' ? 'setup' : res.room.state);
-      }
-    });
+    const joinAsHost = () => {
+      socket.emit('joinRoom', { roomId, username, isHost: true }, (res) => {
+        if (!res || !res.success) {
+          showAlert((res && res.error) || 'Ошибка подключения');
+          navigate('/');
+        } else {
+          setRoom(res.room);
+          setPlayedQuestionsText(res.room.playedQuestionsIds.join(', '));
+          setGameState(res.room.state === 'waiting' ? 'setup' : res.room.state);
+        }
+      });
+    };
+
+    if (socket.connected) {
+      joinAsHost();
+    }
+    socket.on('connect', joinAsHost);
 
     const handleRoomUpdate = (updatedRoom) => {
       setRoom(updatedRoom);
       setGameState(updatedRoom.state === 'waiting' ? 'setup' : updatedRoom.state);
-    };
-
-    const handleActionUndone = () => {
-      showAlert('Действие успешно отменено!');
     };
 
     const handleJoinRequestNotification = ({ isTimerActive, username }) => {
@@ -81,13 +88,24 @@ export default function HostView() {
       }
     };
 
+    const handlePenaltyApplied = ({ targetUsername, penaltyType }) => {
+      if (penaltyType === 'time') {
+        showAlert('Внимание! Следующая минута обсуждения урезана (-20 секунд)!');
+      } else if (penaltyType === 'remove_1_round') {
+        showAlert(`Внимание! Игрок ${targetUsername} удаляется из-за стола до конца раунда!`);
+      } else if (penaltyType === 'remove_hat') {
+         showAlert(`Игрок ${targetUsername} лишается магической шляпы!`);
+      }
+    };
+
     socket.on('roomUpdated', handleRoomUpdate);
-    socket.on('actionUndone', handleActionUndone);
+    socket.on('penaltyApplied', handlePenaltyApplied);
     socket.on('joinRequestNotification', handleJoinRequestNotification);
 
     return () => {
+      socket.off('connect', joinAsHost);
       socket.off('roomUpdated', handleRoomUpdate);
-      socket.off('actionUndone', handleActionUndone);
+      socket.off('penaltyApplied', handlePenaltyApplied);
       socket.off('joinRequestNotification', handleJoinRequestNotification);
     };
   }, [roomId, navigate]);
@@ -106,7 +124,7 @@ export default function HostView() {
   };
 
   const handleCancelRound = () => {
-    showConfirm('Вы уверены, что хотите аннулировать раунд?', () => {
+    showConfirm("Вы уверены, что хотите аннулировать раунд? Стрелка волчка вернется на исходную, а этот конфуз останется в анналах истории.", () => {
       socket.emit('cancelRound', { roomId });
     });
   };
@@ -120,7 +138,6 @@ export default function HostView() {
       socket.emit('adjustScore', { roomId, team, delta });
     }
   };
-
   const spinRoulette = () => {
     if (room.currentQuestion) {
       return showAlert('Сначала начислите балл за текущий вопрос или аннулируйте его!');
@@ -132,31 +149,39 @@ export default function HostView() {
     if (!room.currentQuestion) {
       return showAlert('Вы не можете запустить минуту, пока не запущен волчок и не выбран вопрос от телезрителя!');
     }
+    if (room.timerEndsAt) return;
     socket.emit('startTimer', { roomId });
-    showAlert('Время пошло!');
   };
 
   const stopTimer = () => {
-    socket.emit('stopTimer', { roomId });
+    if (!room.timerEndsAt) return;
+    showConfirm("Вы точно хотите остановить время? Господин Крупье, неужели знатоки сдались досрочно?", () => {
+      socket.emit('stopTimer', { roomId });
+    });
   };
 
-  const undoLastAction = () => {
-    socket.emit('undoLastAction', { roomId });
-  };
 
   const setQuestion = (sectorIndex) => {
       socket.emit('setQuestion', {roomId, sectorIndex});
   }
 
   const finishGame = () => {
-    showConfirm('Вы уверены, что хотите завершить игру?', () => {
+    showConfirm('Вы точно хотите завершить игру и закрыть стол? Зрители не простят вам такого раннего ухода!', () => {
       socket.emit('finishGame', { roomId });
     });
   };
 
   const handlePenaltySelect = (player) => {
     setPlayerSelectModal({ isOpen: false, type: null });
-    socket.emit('applyPenalty', { roomId, targetUsername: player.username, penaltyType: playerSelectModal.type });
+    let msg = "";
+    if (playerSelectModal.type === 'remove_1_round') {
+        msg = `Удалить господина/госпожу ${player.username} на один раунд? Красная карточка за неспортивное поведение!`;
+    } else if (playerSelectModal.type === 'remove_hat') {
+        msg = `Лишить господина/госпожу ${player.username} магической шляпы? Пусть думает своей головой!`;
+    }
+    showConfirm(msg, () => {
+      socket.emit('applyPenalty', { roomId, targetUsername: player.username, penaltyType: playerSelectModal.type });
+    });
   };
 
   if (!room) {
@@ -180,20 +205,47 @@ export default function HostView() {
   }
 
   if (gameState === 'finished') {
+    const getPlayedIds = () => {
+      const ids = [...room.playedQuestionsIds, ...room.playedSectors.map(s => room.gameQuestions[s]?.id)]
+        .filter(id => typeof id === 'number')
+        .filter((v, i, a) => a.indexOf(v) === i);
+      return ids.join(', ');
+    };
+
     return (
       <div className="game-container" style={{ justifyContent: 'center', alignItems: 'center' }}>
         <div className="glass-box" style={{ width: '500px', textAlign: 'center', padding: '30px' }}>
-          <h2 style={{ fontSize: '2rem', marginBottom: '20px', color: 'var(--accent-gold)' }}>Игра завершена</h2>
+          <h2 style={{ fontSize: '2rem', marginBottom: '20px', color: 'var(--accent-gold)' }}>ИГРА ОКОНЧЕНА</h2>
           <p style={{ fontSize: '1.2rem', marginBottom: '20px' }}>Счет: Знатоки {room.score.experts} - {room.score.viewers} Зрители</p>
           
-          <h3 style={{ borderBottom: 'none' }}>Список отыгранных вопросов</h3>
-          <p style={{ fontSize: '0.9rem', color: '#ccc', marginBottom: '10px' }}>Скопируйте этот список и сохраните для следующей игры.</p>
-          <textarea 
-            className="premium-input" 
-            style={{ width: '100%', height: '100px', marginBottom: '20px', resize: 'none' }}
-            value={room.playedQuestionsIds.join(', ')}
-            readOnly
-          />
+          <h3 style={{ borderBottom: 'none' }}>Пул сыгранных вопросов</h3>
+          <p style={{ fontSize: '0.9rem', color: '#ccc', marginBottom: '10px' }}>
+            Скопируйте этот текст и вставьте в настройках для следующей игры.<br/>
+            <strong style={{color: '#ff9800'}}>Внимание:</strong> Если кнопка не сработала, обязательно сфотографируйте или сделайте скриншот этих чисел!
+          </p>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+            <textarea 
+              className="premium-input" 
+              style={{ flex: 1, height: '100px', resize: 'none', marginBottom: 0 }}
+              value={getPlayedIds()}
+              readOnly
+            />
+            <button 
+              className="premium-btn" 
+              style={{ width: '60px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+              onClick={() => {
+                try {
+                  navigator.clipboard.writeText(getPlayedIds());
+                  showAlert('Скопировано!');
+                } catch(e) {
+                  showAlert('Ошибка копирования. Сделайте скриншот!');
+                }
+              }}
+              title="Скопировать"
+            >
+              📋
+            </button>
+          </div>
           
           <button className="premium-btn" style={{ width: '100%', padding: '15px', fontSize: '1.2rem' }} onClick={() => navigate('/')}>
             Вернуться в Главное Меню
@@ -208,8 +260,16 @@ export default function HostView() {
       {/* Header */}
       <div className="game-header" style={{ paddingTop: 0, alignItems: 'flex-start' }}>
         <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-          <button className="control-btn danger" onClick={handleCancelRound}>Аннулировать раунд</button>
-          <button className="control-btn danger" onClick={undoLastAction}>Отменить последнее действие</button>
+          <button 
+            className={`control-btn danger ${(room.canceledRounds >= 2) ? 'disabled' : ''}`} 
+            style={{ filter: (room.canceledRounds >= 2) ? 'brightness(0.5)' : 'none' }}
+            disabled={room.canceledRounds >= 2}
+            title={(room.canceledRounds >= 2) ? 'Лимит аннуляций, доступных крупье - исчерпан. Если данный матч зашел в тупик - просим проследовать в лобби для начала новой игры' : ''}
+            onClick={handleCancelRound}
+          >
+            Аннулировать раунд
+          </button>
+          <button className="control-btn warning" onClick={() => setHistoryModalOpen(true)}>История вопросов</button>
           <button className="control-btn danger" onClick={finishGame}>Завершить игру</button>
         </div>
         
@@ -235,32 +295,84 @@ export default function HostView() {
 
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginTop: '20px' }}>
           {room.timerPenalty && <span style={{ color: '#f44336', fontWeight: 'bold' }}>⚠️ Минута урезана</span>}
-          {room.timerSpent && <span style={{ color: '#ff9800', fontWeight: 'bold', background: 'rgba(0,0,0,0.5)', padding: '5px 10px', borderRadius: '5px' }}>⚠️ БАЗОВАЯ МИНУТА ПОТРАЧЕНА</span>}
+          {room.timerSpent && !room.timerEndsAt && <span style={{ color: '#ff9800', fontWeight: 'bold', background: 'rgba(0,0,0,0.5)', padding: '5px 10px', borderRadius: '5px' }}>⚠️ БАЗОВАЯ МИНУТА ПОТРАЧЕНА</span>}
           {timeLeft !== null && (
             <div style={{ fontSize: '2rem', fontWeight: 'bold', color: timeLeft <= 10 ? '#f44336' : '#4caf50', minWidth: '80px', textAlign: 'center', fontFamily: 'monospace' }}>
               {formatTime(timeLeft)}
             </div>
           )}
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button className="control-btn" onClick={startTimer}>Время пошло</button>
-            <button className="control-btn" onClick={stopTimer}>Остановить время</button>
+            <button 
+              className={`control-btn ${(!room.currentQuestion || !!room.timerEndsAt) ? 'disabled' : ''}`} 
+              disabled={!room.currentQuestion || !!room.timerEndsAt} 
+              onClick={startTimer}
+            >
+              Время пошло
+            </button>
+            <button 
+              className={`control-btn ${!room.timerEndsAt ? 'disabled' : ''}`} 
+              disabled={!room.timerEndsAt} 
+              onClick={stopTimer}
+            >
+              Остановить время
+            </button>
           </div>
-          <button className="control-btn" onClick={spinRoulette}>Запустить рулетку</button>
+          <button 
+            className={`control-btn ${(!!room.currentQuestion || isSpinning) ? 'disabled' : ''}`} 
+            disabled={!!room.currentQuestion || isSpinning} 
+            onClick={spinRoulette}
+          >
+            Запустить рулетку
+          </button>
+
+          {(room.currentQuestion?.id?.toString().startsWith('BB') || room.currentQuestion?.assetUrl || room.currentQuestion?.bbItemAsset) && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginLeft: '20px', borderLeft: '2px solid #555', paddingLeft: '20px' }}>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <span style={{color: '#4caf50', fontWeight: 'bold'}}>ЧЕРНЫЙ ЯЩИК:</span>
+                <button 
+                  className={`control-btn ${room.blackBoxState !== 'hidden' ? 'disabled' : ''}`}
+                  disabled={room.blackBoxState !== 'hidden'}
+                  onClick={() => {
+                    socket.emit('showBlackBox', { roomId });
+                    showAlert('Черный ящик внесен на стол!');
+                  }}
+                >
+                  Внести
+                </button>
+                <button 
+                  className={`control-btn ${room.blackBoxState !== 'closed' ? 'disabled' : ''}`}
+                  disabled={room.blackBoxState !== 'closed'}
+                  onClick={() => {
+                    socket.emit('openBlackBox', { roomId });
+                    showAlert('Черный ящик открыт!');
+                  }}
+                >
+                  Открыть
+                </button>
+                <button 
+                  className={`control-btn danger ${room.blackBoxState === 'hidden' ? 'disabled' : ''}`}
+                  disabled={room.blackBoxState === 'hidden'}
+                  onClick={() => socket.emit('endBlackBox', { roomId })}
+                >
+                  Унести
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Body */}
       <div className="game-body">
-        
-        {/* Левая панель */}
+        {/* Левая панель - Управление раундом */}
         <div className="side-panel">
           <div className="glass-box">
-            <h3 onClick={() => setPenaltiesOpen(!penaltiesOpen)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }}>
+            <h3 onClick={() => setPenaltiesOpen(!penaltiesOpen)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', color: '#f44336', borderColor: '#f44336' }}>
               Панель штрафов <span>{penaltiesOpen ? '▲' : '▼'}</span>
             </h3>
             {penaltiesOpen && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-                <button className="control-btn danger" style={{ fontSize: '0.8rem' }} onClick={() => socket.emit('applyPenalty', { roomId, penaltyType: 'time' })}>Урезать время (-20 сек)</button>
+                <button className="control-btn danger" style={{ fontSize: '0.8rem' }} onClick={() => showConfirm("Урезать минуту до 40 секунд? Жестоко, но правила есть правила.", () => socket.emit('applyPenalty', { roomId, penaltyType: 'time' }))}>Урезать время (-20 сек)</button>
                 <button className="control-btn danger" style={{ fontSize: '0.8rem' }} onClick={() => setPlayerSelectModal({ isOpen: true, type: 'remove_1_round' })}>Удалить игрока (1 раунд)</button>
                 <button className="control-btn danger" style={{ fontSize: '0.8rem' }} onClick={() => setPlayerSelectModal({ isOpen: true, type: 'remove_hat' })}>Лишить знатока шапки</button>
               </div>
@@ -273,20 +385,14 @@ export default function HostView() {
             </h3>
             {hintsOpen && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-                <button className={`control-btn ${room.hints.credit ? 'disabled' : ''}`} disabled={room.hints.credit} style={{ fontSize: '0.8rem' }} onClick={() => socket.emit('activateHint', { roomId, hintType: 'credit' })}>Выдать "Минуту в кредит"</button>
-                <button className={`control-btn ${room.hints.club || (room.score.experts === 5 && room.score.viewers === 5) ? 'disabled' : ''}`} disabled={room.hints.club || (room.score.experts === 5 && room.score.viewers === 5)} style={{ fontSize: '0.8rem' }} onClick={() => socket.emit('activateHint', { roomId, hintType: 'club' })}>Активировать "Помощь клуба"</button>
-                <button className={`control-btn ${room.hints.host || (room.score.experts === 5 && room.score.viewers === 5) ? 'disabled' : ''}`} disabled={room.hints.host || (room.score.experts === 5 && room.score.viewers === 5)} style={{ fontSize: '0.8rem' }} onClick={() => socket.emit('activateHint', { roomId, hintType: 'host' })}>Выдать "Помощь Крупье"</button>
+                <button className={`control-btn success ${room.hints.credit ? 'disabled' : ''}`} disabled={room.hints.credit} style={{ fontSize: '0.8rem' }} onClick={() => showConfirm("Выдаем минуту в кредит? Помните, долг платежом красен.", () => socket.emit('activateHint', { roomId, hintType: 'credit' }))}>Выдать "Минуту в кредит"</button>
+                <button className={`control-btn success ${room.hints.club || (room.score.experts === 5 && room.score.viewers === 5) ? 'disabled' : ''}`} disabled={room.hints.club || (room.score.experts === 5 && room.score.viewers === 5)} style={{ fontSize: '0.8rem' }} onClick={() => showConfirm("Клуб готов помочь! Активировать Помощь Клуба? Знатоки уверены, что зал не подведет?", () => socket.emit('activateHint', { roomId, hintType: 'club' }))}>Активировать "Помощь клуба"</button>
+                <button className={`control-btn success ${room.hints.host || (room.score.experts === 5 && room.score.viewers === 5) ? 'disabled' : ''}`} disabled={room.hints.host || (room.score.experts === 5 && room.score.viewers === 5)} style={{ fontSize: '0.8rem' }} onClick={() => showConfirm("Господин Ведущий снисходит до подсказки? Уверены, что хотите использовать 'Помощь Крупье'?", () => socket.emit('activateHint', { roomId, hintType: 'host' }))}>Выдать "Помощь Крупье"</button>
               </div>
             )}
           </div>
 
-          <div className="glass-box" style={{ padding: '10px', textAlign: 'center', cursor: 'pointer', border: hasPending ? '2px solid #f44336' : '1px solid var(--accent-gold)' }} onClick={() => setJoinRequestsModal(true)}>
-             <span style={{ fontSize: '1.5rem', filter: hasPending ? 'none' : 'grayscale(1)', position: 'relative' }}>
-                ✉️
-                {hasPending && <div style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'red', width: '10px', height: '10px', borderRadius: '50%' }}></div>}
-             </span>
-             <span style={{ marginLeft: '10px', color: hasPending ? '#fff' : '#aaa' }}>Заявки на вход ({pendingRequests.length})</span>
-          </div>
+
 
           <div className="glass-box" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
             <h3 style={{ borderBottom: 'none', marginBottom: '5px' }}>Вопрос</h3>
@@ -311,11 +417,12 @@ export default function HostView() {
         {/* Центр */}
         <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <Roulette 
-            spinning={false} // Host view doesn't need to see the spinning animation, or we can make it sync
             targetSector={room.targetSector} 
             playedSectors={room.playedSectors} 
             onSectorSelected={setQuestion}
             isHost={true}
+            onSpinStart={() => setIsSpinning(true)}
+            onSpinEnd={() => setIsSpinning(false)}
           />
         </div>
 
@@ -332,15 +439,15 @@ export default function HostView() {
         }}>
           <div style={{ 
             height: '240px', 
-            background: `url(${room.currentQuestion ? room.currentQuestion.photoUrl : '/assets/chgk-asset-horse.PNG'}) center/cover`, 
+            background: `url("${(room.currentQuestion && !isSpinning) ? room.currentQuestion.photoUrl : '/assets/zaglushka.png'}") center / cover`, 
             borderBottom: '2px solid var(--accent-gold)' 
           }}></div>
           <div style={{ padding: '10px' }}>
-            <h4 style={{ margin: 0, color: 'var(--accent-gold)', fontSize: '1rem' }}>
-                {room.currentQuestion ? room.currentQuestion.authorName : "Неизвестный Зритель"}
+            <h4 style={{ margin: 0, color: 'var(--accent-gold)', fontSize: '1rem', lineHeight: '1.2' }}>
+                {(room.currentQuestion && !isSpinning) ? room.currentQuestion.authorName : (room.playedSectors.length > 0 ? "Раунд завершен" : "Ожидание")}
             </h4>
             <p style={{ margin: '5px 0 0 0', color: '#ccc', fontSize: '0.8rem' }}>
-                {room.currentQuestion ? `${room.currentQuestion.job}, г. ${room.currentQuestion.city}` : "Профессия, Город N"}
+                {(room.currentQuestion && !isSpinning) ? `${room.currentQuestion.job}, г. ${room.currentQuestion.city}` : (room.playedSectors.length > 0 ? "Очко начислено. Запускайте рулетку для продолжения игры." : "Игра началась. Запускайте рулетку.")}
             </p>
           </div>
         </div>
@@ -386,7 +493,7 @@ export default function HostView() {
               {pendingRequests.map(req => (
                 <div key={req.username} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.5)', padding: '10px', borderRadius: '5px' }}>
                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: `url(/assets/avatars/${req.active_avatar}) center/cover` }}></div>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: `url("/assets/avatars/${req.active_avatar}") center / cover` }}></div>
                       <span>{req.username}</span>
                    </div>
                    <div style={{ display: 'flex', gap: '10px' }}>
@@ -414,23 +521,203 @@ export default function HostView() {
         </div>
       )}
 
-      <div className="room-code-display" style={{
+      {rulebookOpen && (
+        <div className="elite-modal-overlay">
+          <div className="elite-modal" style={{ maxWidth: '800px', maxHeight: '80vh', overflowY: 'auto', position: 'relative' }}>
+            <button 
+              onClick={() => setRulebookOpen(false)} 
+              style={{ position: 'absolute', top: '15px', right: '20px', background: 'none', border: 'none', color: 'var(--accent-gold)', fontSize: '1.5rem', cursor: 'pointer' }}
+              title="Закрыть"
+            >
+              ✖
+            </button>
+            <h2 style={{ color: 'var(--accent-gold)' }}>Справочник Крупье</h2>
+            <div style={{ textAlign: 'left', lineHeight: '1.6', color: 'var(--text-muted)' }}>
+              <h3 style={{ color: 'var(--accent-gold)', marginTop: '15px' }}>Цель и Ход Игры</h3>
+              <p>Главная цель — довести счет игры до <strong>6 очков</strong> в пользу любой из команд. В начале каждого раунда вы запускаете рулетку, читаете выпавший вопрос и запускаете таймер. После ответа Знатоков вы решаете, чей ответ верен, и начисляете балл. Как только счет достигает отметки 6 — игра завершается. Через пару секунд после начисления финального балла автоматически заиграет музыкальная композиция, соответствующая исходу игры. Пока звучит музыка, все остаются за столом — это ваше время поздравить победителей и подвести краткие итоги. После завершения трека система автоматически вернет всех участников в лобби для дальнейшего обсуждения.</p>
+
+              <h3 style={{ color: 'var(--accent-gold)', marginTop: '15px' }}>Аннулирование Раунда</h3>
+              <p>На столе 16 секторов: 14 основных и 2 запасных. Поэтому <strong>не рекомендуется аннулировать более 2 раундов</strong> за игру, иначе вопросов попросту не хватит для выявления победителя. Кнопка аннулирования — это экстренный "стоп-кран", а не инструмент ведения игры. Используйте её исключительно в случаях неопровержимо доказанной некорректности вопроса, либо при явном вскрытии факта жульничества со стороны Знатоков. Аннулировать вопрос из-за того, что он "не понравился", или потому что Знатоки не знают ответа — категорически неприемлемо в нашем элитарном обществе.</p>
+
+              <h3 style={{ color: 'var(--accent-gold)', marginTop: '15px' }}>Ваша Роль</h3>
+              <p>Вы — голос справедливости. Вы не играете против Знатоков, но строго следите за тем, чтобы правила Клуба соблюдались. Ваша цель — создать атмосферу элитарного напряжения и следить за честностью поединка умов.</p>
+
+              <h3 style={{ color: 'var(--accent-gold)', marginTop: '15px' }}>Ход Минуты</h3>
+              <ul style={{ paddingLeft: '20px' }}>
+                <li>Минута дается Знатокам на обсуждение <strong>и на формулировку</strong> ответа. Дополнительного времени "подумать, как правильно сказать" после сирены не дается.</li>
+                <li>Минута запускается только после полного прочтения вопроса. Вы <strong>обязаны вслух объявить</strong> «Время пошло» в момент запуска таймера, чтобы это не стало для Знатоков неожиданностью.</li>
+                <li>За 10 секунд до конца звучит сигнал — знак того, что команде пора сводить версии воедино.</li>
+                <li>После финального гонга любое обсуждение должно быть прекращено.</li>
+                <li>После гонга вы еще раз зачитываете вопрос и спрашиваете Капитана: «Кто отвечает?». Капитан имеет право <strong>назначить отвечать абсолютно любого знатока, в том числе и самого себя</strong>.</li>
+                <li>Только назначенный игрок имеет право озвучить ответ. Выкрики от других игроков игнорируются, а за продолжение обсуждения после гонга выписывается штраф.</li>
+              </ul>
+              
+              <h3 style={{ color: 'var(--accent-gold)', marginTop: '15px' }}>Специальные Сектора</h3>
+              <ul style={{ paddingLeft: '20px', lineHeight: '1.5' }}>
+                <li><strong>Черный ящик (Зеленый сектор):</strong> Если на рулетке выпадает Зеленый Сектор, в студию "выносится" Черный Ящик. Вы зачитываете вопрос о содержимом ящика, после чего дается стандартная минута на обсуждение. После ответа ящик вскрывается, и его содержимое демонстрируется. Очко присуждается по обычным правилам.</li>
+              </ul>
+
+              <h3 style={{ color: 'var(--accent-gold)', marginTop: '15px' }}>Подсказки (Палочки-выручалочки)</h3>
+              <ul style={{ paddingLeft: '20px' }}>
+                <li>В рамках <strong>одного раунда</strong> команда имеет право взять только <strong>одну</strong> подсказку.</li>
+                <li><strong>Минута в кредит:</strong> Вы активируете ее в своей панели. Это дает знатокам +60 секунд прямо сейчас, но в будущем (когда вы решите) вы обяжете их ответить на один из вопросов досрочно, вообще без минуты.</li>
+                <li><strong>Помощь Клуба:</strong> Если Капитан просит ее, вы нажимаете кнопку в панели подсказок. Знатокам на экран выводится текст, а таймеру добавляется 60 секунд.</li>
+                <li><strong>Помощь Ведущего:</strong> Запрашивается Капитаном. Если команда берет эту подсказку, вы <strong>нажимаете кнопку в своем интерфейсе</strong> (это спишет её и заблокирует другие подсказки на текущий раунд), после чего даете <strong>устную наводку от себя</strong> (или перефразируете "Подсказку Клуба", делая ее недоступной в интерфейсе). Наводка должна лишь направить ход мыслей, но не быть откровенным подыгрыванием. Дополнительного времени при этом не дается.</li>
+              </ul>
+
+              <h3 style={{ color: 'var(--accent-gold)', marginTop: '15px' }}>FAQ: Частые Спорные Ситуации</h3>
+              <ul style={{ paddingLeft: '20px' }}>
+                <li><strong>Знатоки дали синонимичный ответ:</strong> Если суть передана абсолютно верно и не искажает логику вопроса, ответ засчитывается. Элитарный клуб ценит интеллект, а не зубрёжку словарей.</li>
+                <li><strong>Ответ выкрикнул не тот, кого назначил Капитан:</strong> Ответ не принимается. Вы вправе дать штраф, либо дать команде шанс ответить назначенному игроку.</li>
+                <li><strong>Гениальная версия, не совпадающая с вашей:</strong> Если версия логична, красива и не противоречит фактам, Крупье имеет право засчитать её. Вы — судья, а не бездушный компьютер.</li>
+                <li><strong>Крупье случайно или вынужденно аннулировал больше двух вопросов:</strong> Лимит исчерпан и кнопка заблокируется. Вопросов на столе больше не хватит для корректного завершения игры. В таком случае - единственный известный клубу вариант - завершить матч и проследовать в лобби для начала новой игры.</li>
+              </ul>
+              
+              <div style={{ marginTop: '25px', padding: '15px', border: '1px solid var(--accent-gold)', borderRadius: '5px', backgroundColor: 'rgba(255, 215, 0, 0.05)' }}>
+                <p style={{ fontStyle: 'italic', textAlign: 'center', margin: 0 }}>
+                  «Истинное мастерство Крупье состоит не только в том, чтобы зачитывать вопросы и подсказки, но и в умении виртуозно вести игру, следить за соблюдением элитарных правил, справедливо наказывать за проступки и главное — принимать тяжелые ситуационные решения. Вы — вершитель судеб за этим столом.»
+                </p>
+              </div>
+            </div>
+            <button className="premium-btn elite-modal-btn cancel" onClick={() => setRulebookOpen(false)} style={{ marginTop: '20px' }}>
+              Закрыть Справочник
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div style={{
         position: 'absolute', 
         bottom: '20px', 
-        left: '70px',
-        color: 'var(--accent-gold)',
-        fontSize: '1.2rem',
-        textShadow: '0 0 10px rgba(255, 215, 0, 0.5)',
-        background: 'rgba(0,0,0,0.5)',
-        padding: '5px 15px',
-        borderRadius: '5px',
-        border: '1px solid var(--accent-gold)',
+        right: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '15px',
         zIndex: 100
       }}>
-        Код комнаты: {roomId}
-      </div>
+        <div className="room-code-display" style={{
+          color: 'var(--accent-gold)',
+          fontSize: '1.2rem',
+          textShadow: '0 0 10px rgba(255, 215, 0, 0.5)',
+          background: 'rgba(0,0,0,0.5)',
+          padding: '10px 15px',
+          borderRadius: '5px',
+          border: '1px solid var(--accent-gold)',
+          whiteSpace: 'nowrap'
+        }}>
+          Код комнаты: {roomId}
+        </div>
+        
+        <button 
+          onClick={() => setRulebookOpen(true)}
+          style={{
+            background: 'rgba(0,0,0,0.6)',
+            border: '1px solid var(--accent-gold)',
+            borderRadius: '50%',
+            width: '50px',
+            height: '50px',
+            cursor: 'pointer',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            transition: 'all 0.3s',
+            padding: 0
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          title="Справочник Крупье"
+        >
+          <img src="/assets/book-with-rules.svg" alt="Rulebook" style={{ width: '26px', height: '26px' }} />
+        </button>
 
-      <VolumeControl />
+        <VolumeControl align="right" style={{ position: 'relative', bottom: 'auto', left: 'auto', right: 'auto', zIndex: 100 }} />
+
+        <button 
+          onClick={() => setJoinRequestsModal(true)}
+          style={{
+            background: 'rgba(0,0,0,0.6)',
+            border: hasPending ? '2px solid #f44336' : '1px solid var(--accent-gold)',
+            borderRadius: '50%',
+            width: '50px',
+            height: '50px',
+            cursor: 'pointer',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            transition: 'all 0.3s',
+            padding: 0,
+            position: 'relative'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          title={`Заявки на вход (${pendingRequests.length})`}
+        >
+          <img src="/assets/mail.svg" alt="Mail" style={{ width: '24px', height: '24px', filter: hasPending ? 'none' : 'opacity(0.6)' }} />
+          {hasPending && <div style={{ position: 'absolute', top: '5px', right: '5px', background: '#f44336', width: '12px', height: '12px', borderRadius: '50%' }}></div>}
+        </button>
+      </div>
+      {/* Модальное окно истории вопросов */}
+      {historyModalOpen && (
+        <div className="elite-modal-overlay">
+          <div className="elite-modal-content" style={{ maxWidth: '95vw', width: '1600px', maxHeight: '90vh', overflowY: 'auto', position: 'relative', padding: '40px' }}>
+            <button 
+              onClick={() => setHistoryModalOpen(false)}
+              style={{
+                position: 'absolute', top: '15px', right: '20px', background: 'transparent', color: '#f44336', 
+                border: 'none', fontSize: '2.5rem', cursor: 'pointer', lineHeight: 1, padding: 0
+              }}
+              title="Закрыть"
+            >
+              &times;
+            </button>
+            <h2 className="elite-modal-title" style={{ fontSize: '2rem', marginBottom: '30px' }}>История сыгранных вопросов</h2>
+            {room.playedSectors && room.playedSectors.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                {room.playedSectors.map((sectorIndex, idx) => {
+                  const q = room.gameQuestions[sectorIndex];
+                  if (!q) return null;
+                  return (
+                    <div key={idx} style={{ 
+                      display: 'flex', gap: '30px', background: 'rgba(0,0,0,0.6)', padding: '25px', borderRadius: '12px', border: '1px solid var(--accent-gold)'
+                    }}>
+                      <div style={{ flex: 1, textAlign: 'left' }}>
+                        <h3 style={{ color: 'var(--accent-gold)', marginTop: 0, fontSize: '1.4rem' }}>Вопрос {q.id} (Сектор {sectorIndex === 0 ? 'ЧЯ' : sectorIndex})</h3>
+                        <p style={{ color: '#ccc', fontSize: '1.1rem', lineHeight: '1.6', fontStyle: 'italic', marginBottom: '20px' }}>{q.questionText}</p>
+                        <h3 style={{ color: 'var(--accent-gold)', marginBottom: '10px', fontSize: '1.2rem' }}>Правильный ответ</h3>
+                        <p style={{ color: '#fff', fontSize: '1.1rem', marginTop: 0, fontWeight: 'bold' }}>{q.answerText}</p>
+                        {q.clubHint && (
+                           <div style={{ marginTop: '20px' }}>
+                             <h3 style={{ color: '#2196f3', marginBottom: '5px', fontSize: '1.2rem' }}>Подсказка клуба</h3>
+                             <p style={{ color: '#fff', fontSize: '1rem', fontStyle: 'italic', marginTop: 0 }}>{q.clubHint}</p>
+                           </div>
+                        )}
+                      </div>
+                      <div style={{ width: '220px', textAlign: 'center', flexShrink: 0 }}>
+                        <div style={{ 
+                          height: '220px', 
+                          background: `url("${q.photoUrl}") center / cover`, 
+                          border: '2px solid var(--accent-gold)',
+                          borderRadius: '10px',
+                          marginBottom: '15px'
+                        }}></div>
+                        <h3 style={{ margin: 0, color: 'var(--accent-gold)', fontSize: '1.2rem' }}>{q.authorName}</h3>
+                        <p style={{ margin: '8px 0 0 0', color: '#ccc', fontSize: '0.9rem' }}>{q.job}, г. {q.city}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p style={{ color: '#ccc', fontSize: '1.2rem' }}>Сыгранных вопросов пока нет.</p>
+            )}
+            
+            <div className="modal-buttons" style={{ marginTop: '30px', justifyContent: 'center' }}>
+              <button className="control-btn" onClick={() => setHistoryModalOpen(false)}>Закрыть</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

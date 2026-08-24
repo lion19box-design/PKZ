@@ -94,6 +94,7 @@
   display: flex;
   justify-content: space-around;
   margin-top: 1rem;
+  transform: translateY(15px);
 }
 
 .icon-btn {
@@ -105,13 +106,24 @@
   font-size: 0.9rem;
   transition: var(--transition-smooth);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
 }
 
 .icon-btn:hover {
   color: var(--text-main);
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+.menu-icon {
+  width: 28px;
+  height: 28px;
+  transition: var(--transition-smooth);
+}
+
+.icon-btn:hover .menu-icon {
+  transform: scale(1.1);
 }
 
 .donate-btn:hover {
@@ -244,4 +256,41 @@
   font-size: 1.3rem;
   line-height: 1.6;
   color: #ffb3b3;
+}
+
+.authors-flex {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  margin: 0 auto;
+}
+
+.author-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.author-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent-gold);
+  box-shadow: 0 0 15px rgba(214, 139, 82, 0.3);
+  transition: all 0.3s ease;
+}
+
+.author-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 25px rgba(214, 139, 82, 0.6);
+}
+
+.authors-amp {
+  font-size: 2rem;
+  color: var(--accent-gold);
+  font-family: var(--font-serif);
+  font-style: italic;
 }

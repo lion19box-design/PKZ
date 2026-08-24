@@ -13,10 +13,13 @@ export default function ExpertView() {
   const navigate = useNavigate();
   const { showAlert, showConfirm } = useEliteNotification();
   
+  const [playerSelectModal, setPlayerSelectModal] = useState({ isOpen: false, type: '' });
+  const [isSpinning, setIsSpinning] = useState(false);
   const [gameState, setGameState] = useState('setup'); // 'setup', 'playing'
   const [room, setRoom] = useState(null);
   const [showClubHint, setShowClubHint] = useState(false);
   const [needsAudioUnlock, setNeedsAudioUnlock] = useState(false);
+  const [rulebookOpen, setRulebookOpen] = useState(false);
 
   useEffect(() => {
     if (navigator.userActivation && !navigator.userActivation.hasBeenActive) {
@@ -36,15 +39,22 @@ export default function ExpertView() {
       return;
     }
 
-    socket.emit('joinRoom', { roomId, username, isHost: false }, (res) => {
-      if (!res || !res.success) {
-        showAlert((res && res.error) || 'Ошибка подключения');
-        navigate('/');
-      } else {
-        setRoom(res.room);
-        setGameState(res.room.state === 'waiting' ? 'setup' : res.room.state);
-      }
-    });
+    const joinAsExpert = () => {
+      socket.emit('joinRoom', { roomId, username, isHost: false }, (res) => {
+        if (!res || !res.success) {
+          showAlert((res && res.error) || 'Ошибка подключения');
+          navigate('/');
+        } else {
+          setRoom(res.room);
+          setGameState(res.room.state === 'waiting' ? 'setup' : res.room.state);
+        }
+      });
+    };
+
+    if (socket.connected) {
+      joinAsExpert();
+    }
+    socket.on('connect', joinAsExpert);
 
     const handleRoomUpdate = (updatedRoom) => {
       setRoom(updatedRoom);
@@ -71,7 +81,7 @@ export default function ExpertView() {
     };
 
     const handleFinalRound = () => {
-      showAlert('Внимание! Счет 4:4. Приближается ФИНАЛЬНЫЙ РАУНД!');
+      showAlert('Внимание! Счет 5:5. Приближается ФИНАЛЬНЫЙ РАУНД!');
     };
 
     const handleRoomDestroyed = () => {
@@ -92,6 +102,7 @@ export default function ExpertView() {
     socket.on('kickedOut', handleKickedOut);
 
     return () => {
+      socket.off('connect', joinAsExpert);
       socket.off('roomUpdated', handleRoomUpdate);
       socket.off('hintActivated', handleHintActivated);
       socket.off('penaltyApplied', handlePenaltyApplied);
@@ -114,6 +125,57 @@ export default function ExpertView() {
 
   if (gameState === 'setup') {
     return <GameLobby role="expert" roomId={roomId} room={room} />;
+  }
+
+  if (gameState === 'finished') {
+    const getPlayedIds = () => {
+      const ids = [...room.playedQuestionsIds, ...room.playedSectors.map(s => room.gameQuestions[s]?.id)]
+        .filter(id => typeof id === 'number')
+        .filter((v, i, a) => a.indexOf(v) === i);
+      return ids.join(', ');
+    };
+
+    return (
+      <div className="game-container" style={{ justifyContent: 'center', alignItems: 'center' }}>
+        <div className="glass-box" style={{ width: '500px', textAlign: 'center', padding: '30px' }}>
+          <h2 style={{ fontSize: '2rem', marginBottom: '20px', color: 'var(--accent-gold)' }}>ИГРА ОКОНЧЕНА</h2>
+          <p style={{ fontSize: '1.2rem', marginBottom: '20px' }}>Счет: Знатоки {room.score.experts} - {room.score.viewers} Зрители</p>
+          
+          <h3 style={{ borderBottom: 'none' }}>Пул сыгранных вопросов</h3>
+          <p style={{ fontSize: '0.9rem', color: '#ccc', marginBottom: '10px' }}>
+            Скопируйте этот текст и вставьте в настройках для следующей игры.<br/>
+            <strong style={{color: '#ff9800'}}>Внимание:</strong> Если кнопка не сработала, обязательно сфотографируйте или сделайте скриншот этих чисел!
+          </p>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+            <textarea 
+              className="premium-input" 
+              style={{ flex: 1, height: '100px', resize: 'none', marginBottom: 0 }}
+              value={getPlayedIds()}
+              readOnly
+            />
+            <button 
+              className="premium-btn" 
+              style={{ width: '60px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+              onClick={() => {
+                try {
+                  navigator.clipboard.writeText(getPlayedIds());
+                  showAlert('Скопировано!');
+                } catch(e) {
+                  showAlert('Ошибка копирования. Сделайте скриншот!');
+                }
+              }}
+              title="Скопировать"
+            >
+              📋
+            </button>
+          </div>
+          
+          <button className="premium-btn" style={{ width: '100%', padding: '15px', fontSize: '1.2rem' }} onClick={() => navigate('/')}>
+            Вернуться в Главное Меню
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -146,7 +208,9 @@ export default function ExpertView() {
           boxShadow: '0 4px 15px rgba(0,0,0,0.5)', textAlign: 'center'
         }}>
           <h2 style={{ margin: '0 0 10px 0' }}>Крупье активировал "Помощь Клуба"!</h2>
-          <p style={{ margin: 0, fontSize: '1.2rem' }}>Слушайте внимательно, клуб диктует свой ответ.</p>
+          <p style={{ margin: 0, fontSize: '1.2rem', fontStyle: 'italic' }}>
+            {room.currentQuestion?.clubHint || "Клуб не смог найти подсказку..."}
+          </p>
           <button 
             className="premium-btn" 
             style={{ marginTop: '15px', background: '#d32f2f' }}
@@ -183,7 +247,7 @@ export default function ExpertView() {
                   height: '100%',
                   borderRadius: '50%',
                   backgroundColor: userColor,
-                  backgroundImage: exp.active_avatar ? `url(/assets/avatars/${exp.active_avatar})` : 'none',
+                  backgroundImage: exp.active_avatar ? `url("/assets/avatars/${exp.active_avatar}")` : 'none',
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                   border: `3px solid ${isHatless ? '#f44336' : 'var(--accent-gold)'}`,
@@ -219,6 +283,70 @@ export default function ExpertView() {
         })}
       </div>
 
+      {/* Рендер Черного Ящика */}
+      {room.blackBoxState && room.blackBoxState !== 'hidden' && (
+        <>
+          <div style={{
+            position: 'absolute', top: '50%', right: '35%', transform: 'translate(50%, -50%) scale(0.81)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 5,
+            transition: 'all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)', opacity: 1,
+            animation: 'bbAppear 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+          }}>
+            {/* Свет */}
+            <img src="/assets/blackbox/light-effect.png" alt="Light" style={{
+               position: 'absolute', top: '-300px', width: '540px', pointerEvents: 'none', zIndex: 6,
+               animation: 'pulse 3s infinite'
+            }} />
+            
+            {/* Стол */}
+            <img src="/assets/blackbox/useful-table-asset.svg" alt="Table" style={{
+               width: '540px', position: 'relative', zIndex: 5, marginTop: '135px'
+            }} />
+            
+            {/* Ящик */}
+            {room.blackBoxState === 'closed' && (
+               <img src="/assets/blackbox/closed-box-asset.svg" alt="Closed Box" style={{
+                  position: 'absolute', bottom: '258px', width: '243px', zIndex: 10,
+                  transition: 'all 0.5s ease'
+               }} />
+            )}
+
+            {room.blackBoxState === 'opened' && (
+               <>
+                 <img src="/assets/blackbox/sparkle-asset.png" alt="Aura" style={{
+                    position: 'absolute', bottom: '258px', width: '360px', zIndex: 9,
+                    animation: 'spinPulse 4s infinite linear'
+                 }} />
+                 <img src="/assets/blackbox/open-box-asset.svg" alt="Open Box" style={{
+                    position: 'absolute', bottom: '258px', width: '243px', zIndex: 10
+                 }} />
+                 {(room.currentQuestion?.assetUrl || room.currentQuestion?.bbItemAsset) && (
+                   <img 
+                     src={room.currentQuestion.assetUrl || room.currentQuestion.bbItemAsset} 
+                     alt="Item" 
+                     style={{
+                        position: 'absolute', bottom: '328px', width: '270px', maxHeight: '270px', objectFit: 'contain', zIndex: 11,
+                        animation: 'bbItemRise 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+                     }} 
+                   />
+                 )}
+               </>
+            )}
+          </div>
+        </>
+      )}
+
+      <style>{`
+        @keyframes bbAppear {
+          0% { opacity: 0; transform: translate(50%, -40%) scale(0.6); }
+          100% { opacity: 1; transform: translate(50%, -50%) scale(1); }
+        }
+        @keyframes bbItemRise {
+          0% { opacity: 0; transform: translateY(30px) scale(0.4); }
+          100% { opacity: 1; transform: translateY(0) scale(1.1); }
+        }
+      `}</style>
+
       {/* Верхнее табло (по центру) */}
       <div style={{ position: 'absolute', top: 0, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 10 }}>
         {room.timerPenalty && (
@@ -230,11 +358,6 @@ export default function ExpertView() {
           <div className="score-panel experts" style={{ minWidth: '150px' }}>
             <span className="score-label">Знатоки</span>
             <span className="score-value">{room.score.experts}</span>
-            <div style={{ position: 'absolute', bottom: '-25px', display: 'flex', gap: '5px' }}>
-              <span className={`hint-icon ${room.hints.credit ? 'used' : ''}`} title="Минута в кредит">⏳</span>
-              <span className={`hint-icon ${room.hints.club ? 'used' : ''}`} title="Помощь клуба">👨‍👩‍👧‍👦</span>
-              <span className={`hint-icon ${room.hints.host ? 'used' : ''}`} title="Помощь Крупье">🗣️</span>
-            </div>
           </div>
           <div className="score-panel viewers" style={{ minWidth: '150px' }}>
             <span className="score-label">Зрители</span>
@@ -244,12 +367,17 @@ export default function ExpertView() {
       </div>
 
       {/* Центр - Игровой стол */}
-      <div style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', transform: 'scale(1.1)' }}>
+      <div style={{ 
+          width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', 
+          transform: room.blackBoxState && room.blackBoxState !== 'hidden' ? 'scale(1.1) translateX(-15%)' : 'scale(1.1)',
+          transition: 'transform 1s ease'
+      }}>
          <Roulette 
-            spinning={room.targetSector === null && room.state === 'playing'} // Заглушка: крутится пока таргет не выбран
             targetSector={room.targetSector} 
             playedSectors={room.playedSectors} 
             isHost={false}
+            onSpinStart={() => setIsSpinning(true)}
+            onSpinEnd={() => setIsSpinning(false)}
          />
       </div>
 
@@ -276,15 +404,15 @@ export default function ExpertView() {
         }}>
           <div style={{ 
             height: '240px', 
-            background: `url(${room.currentQuestion ? room.currentQuestion.photoUrl : '/assets/chgk-asset-horse.PNG'}) center/cover`, 
+            background: `url("${(room.currentQuestion && !isSpinning) ? room.currentQuestion.photoUrl : '/assets/zaglushka.png'}") center / cover`, 
             borderBottom: '2px solid var(--accent-gold)' 
           }}></div>
           <div style={{ padding: '10px' }}>
-            <h4 style={{ margin: 0, color: 'var(--accent-gold)', fontSize: '1rem' }}>
-                {room.currentQuestion ? room.currentQuestion.authorName : "Неизвестный Зритель"}
+            <h4 style={{ margin: 0, color: 'var(--accent-gold)', fontSize: '1rem', lineHeight: '1.2' }}>
+                {(room.currentQuestion && !isSpinning) ? room.currentQuestion.authorName : (room.playedSectors.length > 0 ? "Раунд завершен" : "Ожидание")}
             </h4>
             <p style={{ margin: '5px 0 0 0', color: '#ccc', fontSize: '0.8rem' }}>
-                {room.currentQuestion ? `${room.currentQuestion.job}, г. ${room.currentQuestion.city}` : "Профессия, Город N"}
+                {(room.currentQuestion && !isSpinning) ? `${room.currentQuestion.job}, г. ${room.currentQuestion.city}` : (room.playedSectors.length > 0 ? "Очко начислено. Ожидайте запуска рулетки." : "Игра началась. Ожидайте запуска рулетки.")}
             </p>
           </div>
         </div>
@@ -294,28 +422,28 @@ export default function ExpertView() {
           <h3 style={{ textAlign: 'center', fontSize: '1rem', marginBottom: '15px' }}>Палочки-выручалочки</h3>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 10px' }}>
             {/* Минута в кредит */}
-            <div title="Минута в кредит" style={{
+            <div title="Дополнительная минута на обсуждение, которую знатоки обязаны вернуть, ответив досрочно на один из следующих вопросов." style={{
               width: '50px', height: '50px', borderRadius: '50%', background: '#4caf50',
               display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1.5rem',
               border: '2px solid var(--accent-gold)', cursor: 'help',
               filter: !room.hints?.credit ? 'none' : 'grayscale(1) opacity(0.5)'
-            }}>⏳</div>
+            }}><img src="/assets/clockwork-icon.svg" style={{ width: '85%', height: '85%' }} alt="Минута в кредит" /></div>
             
             {/* Помощь клуба */}
-            <div title="Помощь клуба" style={{
+            <div title="Подсказка от знатоков в зале. Активируется ведущим по запросу капитана. Знатокам озвучивается правильное направление мысли." style={{
               width: '50px', height: '50px', borderRadius: '50%', background: '#2196f3',
               display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1.5rem',
               border: '2px solid var(--accent-gold)', cursor: 'help',
               filter: !room.hints?.club ? 'none' : 'grayscale(1) opacity(0.5)'
-            }}>👥</div>
+            }}><img src="/assets/znatoki-icon.svg" style={{ width: '85%', height: '85%' }} alt="Помощь клуба" /></div>
             
             {/* Помощь ведущего */}
-            <div title="Помощь ведущего" style={{
+            <div title="Подсказка от самого Господина Крупье. Используется в крайнем случае, чтобы направить знатоков." style={{
               width: '50px', height: '50px', borderRadius: '50%', background: '#ff9800',
               display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1.5rem',
               border: '2px solid var(--accent-gold)', cursor: 'help',
               filter: !room.hints?.host ? 'none' : 'grayscale(1) opacity(0.5)'
-            }}>🗣️</div>
+            }}><img src="/assets/krupie-icon.svg" style={{ width: '85%', height: '85%' }} alt="Помощь ведущего" /></div>
           </div>
         </div>
 
@@ -339,7 +467,95 @@ export default function ExpertView() {
         Покинуть стол
       </button>
 
-      <VolumeControl />
+      {rulebookOpen && (
+        <div className="elite-modal-overlay">
+          <div className="elite-modal" style={{ maxWidth: '800px', maxHeight: '80vh', overflowY: 'auto', position: 'relative' }}>
+            <button 
+              onClick={() => setRulebookOpen(false)} 
+              style={{ position: 'absolute', top: '15px', right: '20px', background: 'none', border: 'none', color: 'var(--accent-gold)', fontSize: '1.5rem', cursor: 'pointer' }}
+              title="Закрыть"
+            >
+              ✖
+            </button>
+            <h2 style={{ color: 'var(--accent-gold)' }}>Справочник Знатока</h2>
+            <div style={{ textAlign: 'left', lineHeight: '1.6', color: 'var(--text-muted)' }}>
+              <h3 style={{ color: 'var(--accent-gold)', marginTop: '15px' }}>Добро пожаловать в Элитарный Клуб!</h3>
+              <p>Ваша цель — объединить умы за этим столом и дать <strong>6 правильных ответов</strong> быстрее, чем зрители наберут свои 6 очков. Учтите: каждый ваш неверный ответ — это бесценный балл в копилку телезрителей. Поэтому распоряжайтесь каждой выданной вам минутой с хирургической точностью, полируя до блеска свои итоговые формулировки. Помните: вы соревнуетесь не с Господином Крупье, а со зрителями, Крупье же — ваш строгий, но абсолютно беспристрастный арбитр.</p>
+
+              <h3 style={{ color: 'var(--accent-gold)', marginTop: '15px' }}>Ваши Инструменты</h3>
+              <ul style={{ paddingLeft: '20px' }}>
+                <li><strong>Рулетка:</strong> Выбирает один из 16 конвертов с вопросами.</li>
+                <li><strong>Табло:</strong> Показывает текущий счет. Игра идет до 6.</li>
+                <li><strong>Индикаторы Подсказок (внизу справа):</strong> Показывают, какие из трех "палочек-выручалочек" еще доступны вашей команде.</li>
+              </ul>
+
+              <h3 style={{ color: 'var(--accent-gold)', marginTop: '15px' }}>Ход Раунда</h3>
+              <ul style={{ paddingLeft: '20px' }}>
+                <li>Внимательно слушайте вопрос. Минута на обсуждение запускается только после команды Крупье "Время пошло".</li>
+                <li>Вам дается ровно <strong>60 секунд</strong> на обсуждение <strong>и формирование</strong> итогового ответа. Дополнительного времени не будет.</li>
+                <li>За 10 секунд до конца вы услышите звуковой сигнал — пора согласовывать финальную версию.</li>
+                <li>После гонга обсуждение прекращается. Капитан выбирает отвечающего. Выкрики с места наказываются штрафом.</li>
+              </ul>
+
+              <h3 style={{ color: 'var(--accent-gold)', marginTop: '15px' }}>Специальные Сектора</h3>
+              <ul style={{ paddingLeft: '20px', lineHeight: '1.5' }}>
+                <li><strong>Черный ящик (Зеленый сектор):</strong> Если на рулетке выпадает Зеленый Сектор, в студию "выносится" Черный Ящик. Крупье зачитывает вопрос, связанный с его содержимым, после чего дается классическая минута на обсуждение. После ответа ящик вскрывается, и его содержимое становится достоянием глаз всех присутствующих.</li>
+              </ul>
+
+              <h3 style={{ color: 'var(--accent-gold)', marginTop: '15px' }}>Подсказки (Палочки-выручалочки)</h3>
+              <p>За всю игру каждую подсказку можно взять лишь один раз, и <strong>не более одной подсказки за раунд</strong>.</p>
+              <ul style={{ paddingLeft: '20px' }}>
+                <li><strong>Минута в кредит:</strong> Берите, если совсем чуть-чуть не хватает времени докрутить хорошую версию. Но помните: в будущем Крупье обяжет вас ответить на один вопрос досрочно (без обсуждения).</li>
+                <li><strong>Помощь Клуба:</strong> Запрашивайте во время минуты обсуждения. На экран выведется текст-подсказка из базы, и вам дадут еще 60 секунд.</li>
+                <li><strong>Помощь Ведущего:</strong> Запрашивайте, когда команда в глухом тупике. Крупье даст устную наводку от себя, но дополнительного времени не накинет — ответ придется давать сразу.</li>
+              </ul>
+              
+              <div style={{ marginTop: '25px', padding: '15px', border: '1px solid var(--accent-gold)', borderRadius: '5px', backgroundColor: 'rgba(255, 215, 0, 0.05)' }}>
+                <p style={{ fontStyle: 'italic', textAlign: 'center', margin: 0 }}>
+                  «Строго запрещено пользоваться интернетом, смартфонами и любыми сторонними источниками. Смысл Клуба — померяться эрудицией и логикой. Нарушители покрываются позором.»
+                </p>
+              </div>
+            </div>
+            <button className="premium-btn elite-modal-btn cancel" onClick={() => setRulebookOpen(false)} style={{ marginTop: '20px' }}>
+              Вернуться за стол
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div style={{
+        position: 'absolute', 
+        bottom: '20px', 
+        left: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '15px',
+        zIndex: 100
+      }}>
+        <button 
+          onClick={() => setRulebookOpen(true)}
+          style={{
+            background: 'rgba(0,0,0,0.6)',
+            border: '1px solid var(--accent-gold)',
+            borderRadius: '50%',
+            width: '50px',
+            height: '50px',
+            cursor: 'pointer',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            transition: 'all 0.3s',
+            padding: 0
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          title="Справочник Знатока"
+        >
+          <img src="/assets/book-with-rules.svg" alt="Rulebook" style={{ width: '26px', height: '26px' }} />
+        </button>
+
+        <VolumeControl style={{ position: 'relative', bottom: 'auto', left: 'auto', zIndex: 'auto' }} />
+      </div>
     </div>
   );
 }

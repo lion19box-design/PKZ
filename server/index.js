@@ -7,12 +7,14 @@ import db from './db.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { logEvent } from './logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Загружаем базу вопросов
 const questionsData = JSON.parse(fs.readFileSync(path.join(__dirname, 'questions.json'), 'utf-8'));
+const blackBoxQuestions = JSON.parse(fs.readFileSync(path.join(__dirname, 'bb_questions.json'), 'utf-8'));
 
 const app = express();
 app.use(cors());
@@ -28,6 +30,15 @@ const io = new Server(server, {
 
 // Хранилище состояния комнат в памяти (пока не требуется постоянное хранение игры)
 const rooms = new Map();
+// Хранилище таймаутов таймеров отдельно от комнат (чтобы не нарушать сериализацию socket.io)
+const roomTimers = new Map();
+
+function clearRoomTimer(roomId) {
+  if (roomTimers.has(roomId)) {
+    clearTimeout(roomTimers.get(roomId));
+    roomTimers.delete(roomId);
+  }
+}
 
 app.post('/api/auth/register', (req, res) => {
   const { username, password } = req.body;
@@ -150,7 +161,7 @@ app.post('/api/profile/claim-award', (req, res) => {
 
 // Socket.io логика
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+  logEvent('info', null, `User connected: ${socket.id}`);
 
   socket.on('createRoom', (data, callback) => {
     const roomId = Math.floor(1000 + Math.random() * 9000).toString();
@@ -165,12 +176,13 @@ io.on('connection', (socket) => {
       currentQuestion: null,
       targetSector: null,
       playedSectors: [],
+      blackBoxState: 'hidden',
       triumphDeclaredBy: null,
       timerPenalty: false,
       timerEndsAt: null,
       timerSpent: false,
       hints: { credit: false, club: false, host: false },
-      lastAction: null,
+
     });
     socket.join(roomId);
     callback({ roomId });
@@ -179,6 +191,10 @@ io.on('connection', (socket) => {
   socket.on('joinRoom', ({ roomId, username, isHost }, callback) => {
     const room = rooms.get(roomId);
     if (room) {
+      if (!isHost && room.hostUsername === username) {
+         isHost = true;
+      }
+      
       if (!isHost) {
         // Загружаем аватар и шапку из БД
         let active_avatar = 'avatar_boss.jpg';
@@ -240,11 +256,15 @@ io.on('connection', (socket) => {
           }
         }
       } else {
+        if (room.hostUsername && room.hostUsername !== username && room.host) {
+           callback({ success: false, error: 'В этой комнате уже есть Крупье' });
+           return;
+        }
         room.host = socket.id;
         room.hostUsername = username;
         socket.join(roomId);
         io.to(roomId).emit('roomUpdated', room);
-        callback({ success: true, room });
+        callback({ success: true, room, isHost: true });
       }
     } else {
       callback({ success: false, error: 'Комната не найдена' });
@@ -293,11 +313,26 @@ io.on('connection', (socket) => {
          return;
       }
       
-      // Выбираем до 13 случайных вопросов
-      const shuffled = availableQuestions.sort(() => 0.5 - Math.random());
-      room.gameQuestions = shuffled.slice(0, 13);
+      // Fisher-Yates shuffle
+      const shuffled = [...availableQuestions];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      
+      const randomBB = blackBoxQuestions[Math.floor(Math.random() * blackBoxQuestions.length)];
+      room.gameQuestions = [randomBB, ...shuffled.slice(0, 12)];
       room.state = 'playing';
+      room.blackBoxState = 'hidden';
+      
+      logEvent('game', roomId, 'Game started', { 
+          host: socket.id, 
+          viewersCount: room.players.length,
+          questions: room.gameQuestions.map(q => q.id)
+      });
+      
       io.to(roomId).emit('roomUpdated', room);
+      io.to(roomId).emit('playAudioGlobal', 'start-bg-music');
       if (callback) callback({ success: true });
     }
   });
@@ -309,13 +344,19 @@ io.on('connection', (socket) => {
       const availableSectors = [];
       for (let i = 0; i < 13; i++) {
         if (!room.playedSectors.includes(i) && room.gameQuestions[i]) {
+          // Запрет нулевого сектора в первом и финальном раундах
+          if (room.playedSectors.length === 0 && i === 0) continue;
+          if (room.score.experts === 5 && room.score.viewers === 5 && i === 0) continue;
           availableSectors.push(i);
         }
       }
       if (availableSectors.length > 0) {
         const randomSector = availableSectors[Math.floor(Math.random() * availableSectors.length)];
         room.targetSector = randomSector;
-        room.lastAction = { type: 'roulette' };
+
+        
+        logEvent('game', roomId, `Roulette spun, targeted sector ${randomSector}`);
+        
         io.to(roomId).emit('roomUpdated', room);
         io.to(roomId).emit('playAudioGlobal', 'pause-bg-music');
         io.to(roomId).emit('playAudioGlobal', 'roulette-sound-with-result');
@@ -329,12 +370,49 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('showBlackBox', ({ roomId }) => {
+    const room = rooms.get(roomId);
+    if (room && socket.id === room.host) {
+
+      room.blackBoxState = 'closed';
+      io.to(roomId).emit('roomUpdated', room);
+    }
+  });
+
+  socket.on('openBlackBox', ({ roomId }) => {
+    const room = rooms.get(roomId);
+    if (room && socket.id === room.host) {
+
+      room.blackBoxState = 'opened';
+      io.to(roomId).emit('roomUpdated', room);
+      io.to(roomId).emit('playAudioGlobal', 'gong');
+    }
+  });
+
+  socket.on('endBlackBox', ({ roomId }) => {
+    const room = rooms.get(roomId);
+    if (room && socket.id === room.host) {
+
+      room.blackBoxState = 'hidden';
+      io.to(roomId).emit('roomUpdated', room);
+    }
+  });
+
+  socket.on('updateBoxOffset', ({ roomId, offset }) => {
+    const room = rooms.get(roomId);
+    if (room && socket.id === room.host) {
+      room.boxOffsetY = offset;
+      io.to(roomId).emit('roomUpdated', room);
+    }
+  });
+
   socket.on('setQuestion', ({ roomId, sectorIndex }) => {
       const room = rooms.get(roomId);
       if (room && socket.id === room.host) {
           room.currentQuestion = room.gameQuestions[sectorIndex];
           if(!room.playedSectors.includes(sectorIndex)){
              room.playedSectors.push(sectorIndex);
+             logEvent('game', roomId, `Question opened: Sector ${sectorIndex}`, { questionId: room.currentQuestion.id });
           }
           io.to(roomId).emit('roomUpdated', room);
       }
@@ -343,19 +421,25 @@ io.on('connection', (socket) => {
   socket.on('startTimer', ({ roomId }) => {
     const room = rooms.get(roomId);
     if (room && socket.id === room.host) {
+      if (room.timerEndsAt) return;
       const duration = room.timerPenalty ? 40 : 60;
-      room.lastAction = { type: 'timer' };
+
       room.timerEndsAt = Date.now() + duration * 1000;
       room.timerSpent = false;
       
-      if (room.timerTimeout) clearTimeout(room.timerTimeout);
-      room.timerTimeout = setTimeout(() => {
+      clearRoomTimer(roomId);
+      const timeout = setTimeout(() => {
         const r = rooms.get(roomId);
         if (r && r.timerEndsAt) {
           r.timerSpent = true;
+          r.timerEndsAt = null;
+          roomTimers.delete(roomId);
+          io.to(roomId).emit('timerStopped');
+          io.to(roomId).emit('playAudioGlobal', 'resume-bg-music');
           io.to(roomId).emit('roomUpdated', r);
         }
       }, duration * 1000);
+      roomTimers.set(roomId, timeout);
 
       io.to(roomId).emit('timerStarted', { timerEndsAt: room.timerEndsAt });
       io.to(roomId).emit('playAudioGlobal', 'pause-bg-music');
@@ -368,10 +452,13 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomId);
     if (room && socket.id === room.host) {
       room.timerEndsAt = null;
-      if (room.timerTimeout) clearTimeout(room.timerTimeout);
+      room.timerSpent = true;
+      clearRoomTimer(roomId);
+      io.to(roomId).emit('timerStopped');
+      io.to(roomId).emit('playAudioGlobal', 'minute-finished-beep');
+      io.to(roomId).emit('playAudioGlobal', 'resume-bg-music');
       io.to(roomId).emit('roomUpdated', room);
     }
-    io.to(roomId).emit('timerStopped');
   });
 
   socket.on('applyPenalty', ({ roomId, targetUsername, penaltyType }) => {
@@ -402,7 +489,7 @@ io.on('connection', (socket) => {
          return; // В финальном раунде можно брать только минуту в кредит
       }
       room.hints[hintType] = true;
-      room.lastAction = { type: 'hint', hintType };
+
       io.to(roomId).emit('roomUpdated', room);
       io.to(roomId).emit('hintActivated', hintType);
       io.to(roomId).emit('playAudioGlobal', 'hint-appears');
@@ -417,12 +504,19 @@ io.on('connection', (socket) => {
       room.timerPenalty = false;
       room.timerEndsAt = null;
       room.timerSpent = false;
-      if (room.timerTimeout) clearTimeout(room.timerTimeout);
+      clearRoomTimer(roomId);
       room.currentQuestion = null;
+      room.targetSector = null;
+      room.blackBoxState = 'hidden';
       
       room.players.forEach(p => {
         if (p.removedForRound) p.removedForRound = false;
       });
+
+      
+      logEvent('game', roomId, `Score adjusted: ${team} ${delta > 0 ? '+' : ''}${delta}. New score: ${room.score.experts}:${room.score.viewers}`);
+      
+      io.to(roomId).emit('timerStopped');
       io.to(roomId).emit('roomUpdated', room);
       io.to(roomId).emit('playAudioGlobal', 'resume-bg-music');
 
@@ -430,6 +524,9 @@ io.on('connection', (socket) => {
         const winSound = room.score.experts === 6 ? 'znatoki-won-game' : 'znatoki-lost-game';
         io.to(roomId).emit('playAudioGlobal', winSound);
         
+        room.state = 'finished';
+        io.to(roomId).emit('roomUpdated', room);
+
         // Обновляем статистику в БД для всех игроков
         const expertsWon = room.score.experts === 6;
         room.players.forEach(p => {
@@ -461,11 +558,29 @@ io.on('connection', (socket) => {
                db.prepare('UPDATE users SET games_played = ?, wins = ?, losses = ?, pending_awards = ? WHERE username = ?')
                  .run(played, wins, losses, JSON.stringify(pending), p.username);
              }
-           } catch(e) {
-             console.error("DB Update error for user", p.username, e);
-           }
-        });
-        
+            } catch(e) {
+              console.error("DB Update error for user", p.username, e);
+            }
+         });
+         
+         setTimeout(() => {
+            const r = rooms.get(roomId);
+            if (r) {
+                r.state = 'waiting';
+                r.score = { experts: 0, viewers: 0 };
+                r.playedQuestionsIds = [];
+                r.gameQuestions = [];
+                r.playedSectors = [];
+                r.currentQuestion = null;
+                r.targetSector = null;
+                r.blackBoxState = 'hidden';
+                r.timerEndsAt = null;
+                r.timerPenalty = false;
+                r.timerSpent = false;
+                io.to(roomId).emit('roomUpdated', r);
+            }
+         }, 86000); // 86 секунд (длительность аудио znatoki-won-game 1:24 + 2 сек)
+
       } else {
         const roundSound = team === 'experts' && delta > 0 ? 'znatoki-won-round' : (team === 'viewers' && delta > 0 ? 'znatoki-lost-round' : null);
         if (roundSound) io.to(roomId).emit('playAudioGlobal', roundSound);
@@ -484,10 +599,21 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomId);
     if (room && socket.id === room.host) {
       if (room.targetSector !== null) {
-          room.playedSectors = room.playedSectors.filter(s => s !== room.targetSector);
+          // Сектор остается в playedSectors (не выпадает дважды)
           room.targetSector = null;
       }
       room.currentQuestion = null;
+      room.blackBoxState = 'hidden';
+      room.canceledRounds = (room.canceledRounds || 0) + 1;
+      room.timerEndsAt = null;
+      room.timerSpent = false;
+      room.timerPenalty = false;
+      clearRoomTimer(roomId);
+      
+      logEvent('game', roomId, 'Round cancelled');
+      
+      io.to(roomId).emit('timerStopped');
+      io.to(roomId).emit('playAudioGlobal', 'resume-bg-music');
       io.to(roomId).emit('roomUpdated', room);
     }
   });
@@ -496,42 +622,22 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomId);
     if (room && socket.id === room.host) {
       room.state = 'finished';
+      room.timerEndsAt = null;
+      room.timerSpent = false;
+      clearRoomTimer(roomId);
+      
+      logEvent('game', roomId, 'Game finished');
+      
+      io.to(roomId).emit('timerStopped');
       io.to(roomId).emit('roomUpdated', room);
     }
   });
 
-  socket.on('undoLastAction', ({ roomId }) => {
-    const room = rooms.get(roomId);
-    if (room && socket.id === room.host) {
-      if (!room.lastAction) return;
-
-      if (room.lastAction.type === 'timer') {
-        room.timerEndsAt = null;
-        room.timerSpent = false;
-        if (room.timerTimeout) clearTimeout(room.timerTimeout);
-        io.to(roomId).emit('timerStopped');
-        io.to(roomId).emit('playAudioGlobal', 'resume-bg-music');
-        room.lastAction = null;
-        io.to(roomId).emit('roomUpdated', room);
-      } else if (room.lastAction.type === 'roulette') {
-        if (room.targetSector !== null && room.currentQuestion === null) {
-          room.playedSectors = room.playedSectors.filter(s => s !== room.targetSector);
-          room.targetSector = null;
-          io.to(roomId).emit('roomUpdated', room);
-          io.to(roomId).emit('playAudioGlobal', 'resume-bg-music');
-        }
-      } else if (room.lastAction.type === 'hint') {
-        room.hints[room.lastAction.hintType] = false;
-        io.to(roomId).emit('roomUpdated', room);
-      }
-      room.lastAction = null;
-      io.to(socket.id).emit('actionUndone');
-    }
-  });
 
   socket.on('destroyRoom', ({ roomId }) => {
     const room = rooms.get(roomId);
     if (room && socket.id === room.host) {
+      clearRoomTimer(roomId);
       rooms.delete(roomId);
       io.to(roomId).emit('roomDestroyed');
     }
@@ -591,7 +697,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+    logEvent('info', null, `User disconnected: ${socket.id}`);
     for (const [roomId, room] of rooms.entries()) {
       if (room.state === 'waiting') {
         const playerIndex = room.players.findIndex(p => p.id === socket.id);

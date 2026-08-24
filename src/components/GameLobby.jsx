@@ -133,7 +133,7 @@ export default function GameLobby({ role, roomId, room, playedQuestionsText, onP
                   width: '100%',
                   height: '100%',
                   borderRadius: '50%',
-                  backgroundImage: exp.active_avatar ? `url(/assets/avatars/${exp.active_avatar})` : 'none',
+                  backgroundImage: exp.active_avatar ? `url("/assets/avatars/${exp.active_avatar}")` : 'none',
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                   display: 'flex',
@@ -214,6 +214,7 @@ export default function GameLobby({ role, roomId, room, playedQuestionsText, onP
         ) : (
           <button 
             className={`premium-btn start-game-btn ${players.length > 0 && players.every(p => p.ready) ? 'ready' : ''}`} 
+            style={{ filter: players.length > 0 && players.every(p => p.ready) ? 'none' : 'brightness(0.3) grayscale(0.8)' }}
             onClick={handleStart}
           >
             Начать игру

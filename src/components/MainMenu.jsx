@@ -44,23 +44,23 @@ export default function MainMenu() {
 
   const navigate = useNavigate();
 
+  const [hasInteracted, setHasInteracted] = useState(false);
+
   useEffect(() => {
     mainAudioRef.current.loop = true;
     modalAudioRef.current.loop = true;
     customAudioRef.current.loop = true;
     flightAudioRef.current.loop = true;
     
-    // Play main music on first click anywhere
-    const startAudio = () => {
-      if (!isDisturbed && !activeModal && mainAudioRef.current.paused) {
-        mainAudioRef.current.play().catch(() => {});
-      }
-      document.removeEventListener('click', startAudio);
+    const handleInteract = () => {
+      setHasInteracted(true);
+      document.removeEventListener('click', handleInteract);
     };
-    document.addEventListener('click', startAudio);
+    document.addEventListener('click', handleInteract);
+
     
     return () => {
-      document.removeEventListener('click', startAudio);
+      document.removeEventListener('click', handleInteract);
       mainAudioRef.current.pause();
       modalAudioRef.current.pause();
       customAudioRef.current.pause();
@@ -80,6 +80,8 @@ export default function MainMenu() {
   }, [volume]);
 
   useEffect(() => {
+    if (!hasInteracted) return;
+
     if (isDisturbed) {
         mainAudioRef.current.pause();
         modalAudioRef.current.pause();
@@ -101,7 +103,7 @@ export default function MainMenu() {
       // Resume main menu audio
       mainAudioRef.current.play().catch(()=>{});
     }
-  }, [activeModal, isDisturbed]);
+  }, [activeModal, isDisturbed, hasInteracted]);
 
   const handleOwlClick = () => {
     if (isDisturbed) return;
@@ -268,11 +270,21 @@ export default function MainMenu() {
 
         {isLoggedIn && (
           <div className="menu-footer">
-            <button onClick={() => setActiveModal('rules')} className="icon-btn">📜 Правила</button>
-            <button onClick={() => setActiveModal('settings')} className="icon-btn">⚙️ Настройки</button>
-            <button onClick={() => setActiveModal('authors')} className="icon-btn">🖋 Авторы</button>
-            <button onClick={() => navigate('/profile')} className="icon-btn" style={{color: '#fff', textShadow: '0 0 5px var(--accent-gold)'}}>🎩 Профиль</button>
-            <button onClick={() => setActiveModal('donate')} className="icon-btn donate-btn">💰 Донат</button>
+            <button onClick={() => setActiveModal('rules')} className="icon-btn">
+              <img src="/assets/icons/scroll.svg" alt="rules" className="menu-icon" /> Правила
+            </button>
+            <button onClick={() => setActiveModal('settings')} className="icon-btn">
+              <img src="/assets/icons/gear.svg" alt="settings" className="menu-icon" /> Настройки
+            </button>
+            <button onClick={() => setActiveModal('authors')} className="icon-btn">
+              <img src="/assets/icons/pen.svg" alt="authors" className="menu-icon" /> Авторы
+            </button>
+            <button onClick={() => navigate('/profile')} className="icon-btn" style={{color: '#fff', textShadow: '0 0 5px var(--accent-gold)'}}>
+              <img src="/assets/icons/top-hat.svg" alt="profile" className="menu-icon" /> Профиль
+            </button>
+            <button onClick={() => setActiveModal('donate')} className="icon-btn donate-btn">
+              <img src="/assets/icons/money-bag.svg" alt="donate" className="menu-icon" /> Донат
+            </button>
           </div>
         )}
       </div>
@@ -360,7 +372,8 @@ export default function MainMenu() {
                     </ul>
 
                     <h3 style={{ color: 'var(--accent-gold)', marginTop: '15px' }}>3. Логика рулетки и выбор вопроса</h3>
-                    <p>На столе расположены 13 секторов (конвертов) с вопросами от виртуальных "зрителей". В начале каждого раунда Крупье запускает волчок (рулетку). Волчок случайным образом выбирает сектор. Если стрелка указывает на пустой (уже сыгранный) сектор, происходит "магический перескок" на ближайший несыгранный сектор по часовой стрелке.</p>
+                    <p>На игровом столе расположены 15 конвертов с вопросами от телезрителей, а также один особый "зеленый" сектор (Зеро). В начале каждого раунда Крупье запускает рулетку. Наш безупречный алгоритм всегда безошибочно выбирает один из еще не сыгранных секторов, поэтому никаких архаичных "перескоков" стрелки не бывает.</p>
+                    <p style={{ marginTop: '10px' }}><strong>Сектор Зеро ("Черный ящик"):</strong> Если рулетка останавливается на нулевом секторе, разыгрывается особый вопрос. В зал под интригующую музыку "выносится" Черный ящик. Задача Знатоков — путем логики и обсуждения за одну минуту точно определить предмет, который в нем находится.</p>
                     
                     <h3 style={{ color: 'var(--accent-gold)', marginTop: '15px' }}>4. Ход раунда и минута обсуждения</h3>
                     <p>Крупье зачитывает текст вопроса. Как только он говорит "Время пошло", он запускает таймер. У Знатоков есть ровно 60 секунд. По истечении таймера звучит гонг. С этого момента Знатоки обязаны замолчать. Капитан сразу же называет того, кто будет давать ответ. Задержки и продолжение обсуждения после гонга караются штрафами от Крупье.</p>
@@ -411,14 +424,26 @@ export default function MainMenu() {
             {activeModal === 'authors' && (
               <>
                 <h2>Авторы Проекта</h2>
-                <div className="authors-text">
-                  <p>Проект создан и разработан творческим дуэтом:</p>
-                  <br />
-                  <p><strong>Yehor Kudin</strong></p>
-                  <p>&</p>
-                  <p><strong>Gemini 3.1 Pro</strong></p>
-                  <br />
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Добро пожаловать в элитарный клуб.</p>
+                <div className="authors-content">
+                  <p style={{marginBottom: '30px'}}>Проект создан и разработан творческим дуэтом:</p>
+                  <div className="authors-flex">
+                    <div className="author-card">
+                      <img src="/assets/authors/spalah.png" alt="Yehor Kudin" className="author-avatar" onError={(e) => e.target.src = 'https://via.placeholder.com/150/111/D68B52?text=YK'} />
+                      <p><strong>Yehor Kudin</strong></p>
+                    </div>
+                    <div className="authors-amp">&</div>
+                    <div className="author-card">
+                      <img 
+                        src="/assets/authors/gemini.png" 
+                        alt="Gemini 3.1 Pro" 
+                        className="author-avatar" 
+                        style={{ objectPosition: '47% 50%' }}
+                        onError={(e) => e.target.src = 'https://via.placeholder.com/150/111/D68B52?text=G3'} 
+                      />
+                      <p><strong>Gemini 3.1 Pro</strong></p>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '40px' }}>Добро пожаловать в элитарный клуб.</p>
                 </div>
               </>
             )}
@@ -427,8 +452,8 @@ export default function MainMenu() {
               <>
                 <h2>Донат</h2>
                 <p className="donate-text">
-                  Ага, еще чего, решил донатом себе игру упростить?<br/><br/>
-                  Нет-нет, тут схлестнутся умы знатоков, а не их кошельки.
+                  Полагаете, что звон монет способен смягчить правила Элитарного Клуба?<br/><br/>
+                  Оставьте эти иллюзии за дверями. За этим столом истинную ценность имеет лишь острота вашего ума, а не толщина кошелька.
                 </p>
               </>
             )}

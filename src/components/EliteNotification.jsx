@@ -52,17 +52,17 @@ export const EliteNotificationProvider = ({ children }) => {
     <EliteNotificationContext.Provider value={{ showAlert, showConfirm }}>
       {children}
       {modalState.isOpen && (
-        <div className="elite-modal-overlay">
-          <div className="elite-modal-content">
+        <div className="elite-modal-overlay" onClick={handleClose}>
+          <div className="elite-modal-content" onClick={(e) => e.stopPropagation()}>
             <h3 className="elite-modal-title">Внимание</h3>
             <p className="elite-modal-message">{modalState.message}</p>
             <div className="elite-modal-actions">
-              {modalState.type === 'confirm' && (
-                <button className="premium-btn elite-modal-btn cancel" onClick={handleClose}>Отмена</button>
-              )}
               <button className="premium-btn elite-modal-btn confirm" onClick={handleConfirm}>
-                {modalState.type === 'confirm' ? 'Подтвердить' : 'Понятно'}
+                {modalState.type === 'confirm' ? 'Да' : 'Понятно'}
               </button>
+              {modalState.type === 'confirm' && (
+                <button className="premium-btn elite-modal-btn cancel" onClick={handleClose}>Нет</button>
+              )}
             </div>
           </div>
         </div>

@@ -198,7 +198,7 @@ export default function Profile() {
             <div className="avatar-preview-section">
                <div className="avatar-preview">
                  {/* Аватар */}
-                 <div className="avatar-circle" style={{ backgroundImage: `url(/assets/avatars/${profile.active_avatar || 'avatar_businesswoman.jpg'})` }}></div>
+                 <div className="avatar-circle" style={{ backgroundImage: `url("/assets/avatars/${profile.active_avatar || 'avatar_businesswoman.jpg'}")` }}></div>
                  {/* Наложенная шапка */}
                  {profile.active_hat && (
                    <img key={profile.active_hat} className="hat-overlay" src={`/assets/hats/${profile.active_hat}`} alt="hat" style={getHatStyle(profile.active_hat)} />

@@ -40,6 +40,28 @@ const viewers = [
   { file: 'marina-litvinkova-bezrabotnaya-kazan.jpg', name: 'Марина Литвинкова', job: 'Безработная', city: 'Казань', qId: 37 },
   { file: 'timofey-rasskazov-militsioner-moscow.png', name: 'Тимофей Рассказов', job: 'Милиционер', city: 'Москва', qId: 38 },
   { file: 'vladlen-karamazov-student-tomsk.jpg', name: 'Владлен Карамазов', job: 'Студент', city: 'Томск', qId: 39 }
+,
+  { file: 'zhanna-tarasevich-nalogoviy-inspektor-bobruysk.png', name: 'Жанна Тарасевич', job: 'Налоговый инспектор', city: 'Бобруйск', qId: 40 },
+  { file: 'darima-tsyrenova-provodnitsa-ulan-ude.png', name: 'Дарима Цыренова', job: 'Проводница', city: 'Улан-Удэ', qId: 41 },
+  { file: 'oksana-marchenko-bufetchitsa-yalta.png', name: 'Оксана Марченко', job: 'Буфетчица', city: 'Ялта', qId: 42 },
+  { file: 'aurika-rotaru-sekretar-referent-kishinev.png', name: 'Аурика Ротару', job: 'Секретарь-референт', city: 'Кишинев', qId: 43 },
+  { file: 'inessa-shevchenko-buhgalter-dnepropetrovsk.png', name: 'Инесса Шевченко', job: 'Бухгалтер', city: 'Днепропетровск', qId: 44 },
+  { file: 'tiina-kallas-arhivist-tartu.png', name: 'Тийна Каллас', job: 'Архивист', city: 'Тарту', qId: 45 },
+  { file: 'stepan-chernomorets-vodolaz-anapa.png', name: 'Степан Черноморец', job: 'Водолаз', city: 'Анапа', qId: 46 },
+  { file: 'armen-ghazaryan-taksist-gyumri.png', name: 'Армен Казарян', job: 'Таксист', city: 'Гюмри', qId: 47 },
+  { file: 'bogdan-kovalenko-kraeved-kharkov.png', name: 'Богдан Коваленко', job: 'Краевед', city: 'Харьков', qId: 48 },
+  { file: 'rinat-safin-gidrolog-astrakhan.png', name: 'Ринат Сафин', job: 'Гидролог', city: 'Астрахань', qId: 49 },
+  { file: 'ilya-zverev-rukovoditel-kruzhka-rybinsk.png', name: 'Илья Зверев', job: 'Руководитель кружка', city: 'Рыбинск', qId: 50 },
+  { file: 'nyurgun-dyakonov-trener-dzudo-yakutsk.png', name: 'Нюргун Дьяконов', job: 'Тренер по дзюдо', city: 'Якутск', qId: 51 },
+  { file: 'serik-akhmetov-prorab-karaganda.png', name: 'Серик Ахметов', job: 'Прораб', city: 'Караганда', qId: 52 },
+  { file: 'stanislav-volkov-voenruk-sevastopol.png', name: 'Станислав Волков', job: 'Военрук', city: 'Севастополь', qId: 53 },
+  { file: 'taras-bondarenko-smotritel-zooparka-nikolaev.png', name: 'Тарас Бондаренко', job: 'Смотритель зоопарка', city: 'Николаев', qId: 54 },
+  { file: 'timur-isaev-voditel-marshrutki-grozny.png', name: 'Тимур Исаев', job: 'Водитель маршрутки', city: 'Грозный', qId: 55 },
+  { file: 'mikhail-shcherbakov-trudovik-cheboksary.png', name: 'Михаил Щербаков', job: 'Трудовик', city: 'Чебоксары', qId: 56 },
+  { file: 'klavdiya-pavlova-garderobschitsa-penza.png', name: 'Клавдия Павлова', job: 'Гардеробщица', city: 'Пенза', qId: 57 },
+  { file: 'valentin-kuznetsov-banschik-tver.png', name: 'Валентин Кузнецов', job: 'Банщик', city: 'Тверь', qId: 58 },
+  { file: 'gleb-ershov-geolog-irkutsk.png', name: 'Глеб Ершов', job: 'Геолог', city: 'Иркутск', qId: 59 },
+  { file: 'viktor-polyakov-naladchik-stankov-tula.png', name: 'Виктор Поляков', job: 'Наладчик станков', city: 'Тула', qId: 60 }
 ];
 
 const text = fs.readFileSync('C:/Users/lion1/Documents/chgk/approved_questions_backlog.md', 'utf8');
@@ -47,7 +69,7 @@ const chunks = text.split(/^(?:### \d+\.|## Вопрос \d+)/m).map(q => q.trim
 // The first element is the intro text
 chunks.shift();
 
-if (chunks.length !== 39) {
+if (chunks.length !== 60) {
   console.error("Parsed questions count:", chunks.length);
   process.exit(1);
 }
@@ -64,7 +86,7 @@ const extractField = (chunk, prefix) => {
 
 const questionsData = [];
 
-for (let i = 0; i < 39; i++) {
+for (let i = 0; i < 60; i++) {
   let chunk = chunks[i];
   let v = viewers.find(x => x.qId === (i + 1));
   if (!v) {
@@ -94,4 +116,4 @@ for (let i = 0; i < 39; i++) {
 }
 
 fs.writeFileSync('C:/Users/lion1/Documents/chgk/server/questions.json', JSON.stringify(questionsData, null, 2), 'utf8');
-console.log("Written 39 questions to server/questions.json");
+console.log("Written 60 questions to server/questions.json");
