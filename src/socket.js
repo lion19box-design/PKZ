@@ -1,8 +1,9 @@
 import { io } from 'socket.io-client';
 
-// В разработке используем локальный сервер, в проде - можно использовать window.location
-const URL = import.meta.env.PROD ? undefined : 'http://localhost:3001';
+// Если задана переменная VITE_SERVER_URL, используем её. Иначе fallback на http://localhost:3001
+export const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
 
-export const socket = io(URL, {
+export const socket = io(SERVER_URL, {
   autoConnect: true,
+  transports: ['websocket', 'polling']
 });

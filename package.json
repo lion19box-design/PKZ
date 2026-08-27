@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"vite\" \"nodemon --watch server server/index.js\"",
+    "start": "node server/index.js",
     "build": "vite build",
     "preview": "vite preview"
   },

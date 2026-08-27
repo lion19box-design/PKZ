@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { SERVER_URL } from '../socket';
 import './MainMenu.css';
 
 export default function MainMenu() {
@@ -127,7 +128,7 @@ export default function MainMenu() {
   const performAuth = async () => {
     try {
       const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login';
-      let res = await fetch(`http://localhost:3001${endpoint}`, {
+      let res = await fetch(`${SERVER_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })

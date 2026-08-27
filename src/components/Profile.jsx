@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { SERVER_URL } from '../socket';
 import './Profile.css';
 import { getHatStyle } from '../utils/hatConfig';
 
@@ -95,7 +96,7 @@ export default function Profile() {
 
   const fetchProfile = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/api/profile/${username}`);
+      const res = await fetch(`${SERVER_URL}/api/profile/${username}`);
       const data = await res.json();
       if (data.success) {
         setProfile(data.profile);
@@ -133,7 +134,7 @@ export default function Profile() {
     if (!currentAwardObj) return;
     
     try {
-      const res = await fetch('http://localhost:3001/api/profile/claim-award', {
+      const res = await fetch(`${SERVER_URL}/api/profile/claim-award`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, awardId: currentAwardObj.id })
@@ -150,7 +151,7 @@ export default function Profile() {
 
   const handleEquip = async (type, itemId) => {
     try {
-      const res = await fetch('http://localhost:3001/api/profile/equip', {
+      const res = await fetch(`${SERVER_URL}/api/profile/equip`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, type, itemId })
