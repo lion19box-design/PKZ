@@ -189,3 +189,177 @@
   padding: 15px 25px;
   font-size: 1.1rem;
 }
+
+.triumph-btn.triumph-dimmed {
+  background: rgba(30, 30, 35, 0.6) !important;
+  border: 1px solid #555 !important;
+  color: #888 !important;
+  cursor: default;
+  box-shadow: none !important;
+}
+
+.triumph-btn.triumph-active {
+  background: linear-gradient(180deg, #d4af37 0%, #aa8c2c 100%) !important;
+  border: 1.5px solid #ffe066 !important;
+  color: #111 !important;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.4) !important;
+  animation: triumphPulse 1.5s infinite alternate ease-in-out;
+  cursor: pointer;
+}
+
+@keyframes triumphPulse {
+  0% { transform: scale(1); box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); }
+  100% { transform: scale(1.04); box-shadow: 0 0 25px rgba(255, 215, 0, 1), 0 0 10px #ffe066; }
+}
+
+/* --- Mobile Landscape Media Queries for GameLobby --- */
+@media (max-height: 600px) and (orientation: landscape), (max-width: 950px) and (orientation: landscape) {
+  .lobby-header-title {
+    top: 6px;
+    font-size: 1.4rem;
+    letter-spacing: 5px;
+  }
+
+  .lobby-magic-field {
+    top: 40px;
+    left: 12px;
+    width: 25vw;
+    min-width: 160px;
+    max-width: 220px;
+    padding: 8px;
+  }
+
+  .lobby-magic-field h3 {
+    font-size: 0.85rem;
+    margin-bottom: 2px;
+  }
+
+  .lobby-magic-field p {
+    font-size: 0.7rem !important;
+    margin-bottom: 5px !important;
+  }
+
+  .lobby-magic-field textarea {
+    height: 48px;
+    margin: 4px 0;
+    padding: 4px 8px;
+    font-size: 0.78rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .magic-field-controls {
+    display: flex;
+    gap: 4px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .magic-field-controls .control-btn {
+    flex: 1;
+    min-width: 0;
+    padding: 4px 2px !important;
+    font-size: 0.7rem !important;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .lobby-experts-list {
+    top: 40px;
+    width: 40vw;
+    min-width: 240px;
+    max-width: 360px;
+    max-height: calc(100vh - 50px);
+    max-height: calc(100dvh - 50px);
+    overflow-y: auto;
+    padding: 10px;
+  }
+
+  .lobby-experts-list h3 {
+    font-size: 0.95rem;
+    margin-bottom: 5px;
+  }
+
+  .experts-grid {
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .expert-item {
+    padding: 5px 8px;
+    gap: 8px;
+  }
+
+  .expert-avatar-container {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .expert-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+  }
+
+  .expert-name {
+    font-size: 0.9rem;
+  }
+
+  .expert-status {
+    font-size: 1rem;
+  }
+
+  .lobby-host-profile {
+    top: 36px;
+    right: 12px;
+    width: 160px;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .host-photo {
+    height: 120px;
+    background-size: cover;
+    background-position: center 8%;
+  }
+
+  .host-name {
+    margin: 4px 0;
+    font-size: 0.85rem;
+    padding: 2px;
+  }
+
+  .lobby-triumph {
+    top: 205px;
+    bottom: auto;
+    right: 12px;
+    width: 160px;
+  }
+
+  .triumph-btn {
+    width: 100% !important;
+    padding: 5px 6px !important;
+    font-size: 0.7rem !important;
+    line-height: 1.15;
+  }
+
+  .lobby-ready {
+    bottom: 10px;
+    right: 12px;
+    width: 160px;
+  }
+
+  .start-game-btn, .lobby-ready .premium-btn {
+    width: 100% !important;
+    padding: 7px 10px !important;
+    font-size: 0.85rem !important;
+  }
+
+  .exit-btn {
+    bottom: 10px;
+    left: 12px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}

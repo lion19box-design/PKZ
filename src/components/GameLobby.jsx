@@ -18,6 +18,8 @@ export default function GameLobby({ role, roomId, room, playedQuestionsText, onP
   const lobbyMusicRef = useRef(new Audio("/assets/audio/elitist-music/A Znatok Knows....mp3"));
   const triumphSoundRef = useRef(new Audio("/assets/audio/sound-effects/hey-triumph.mp3"));
 
+  const [triumphModalOpen, setTriumphModalOpen] = useState(false);
+
   useEffect(() => {
     const savedVol = localStorage.getItem('chgk_volume');
     const initVol = savedVol !== null ? Number(savedVol) / 100 : 0.5;
@@ -110,6 +112,9 @@ export default function GameLobby({ role, roomId, room, playedQuestionsText, onP
           <h3 style={{ borderBottom: 'none', marginBottom: '5px' }}>Волшебное поле</h3>
           <p style={{ fontSize: '0.85rem', color: '#ccc', marginBottom: '10px' }}>Вставьте коды игравших ранее вопросов (через запятую):</p>
           <textarea
+            id="magic-field-textarea"
+            name="magicField"
+            aria-label="Коды ранее игравших вопросов"
             className="premium-input"
             value={playedQuestionsText || ''}
             onChange={onPlayedQuestionsChange}
@@ -178,27 +183,30 @@ export default function GameLobby({ role, roomId, room, playedQuestionsText, onP
       </div>
 
       {/* Триумф */}
-      <div className="lobby-triumph" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div className="lobby-triumph">
         {role === 'host' ? (
-           <button className="premium-btn triumph-btn" disabled title="Вы видите, кто из знатоков нажал кнопку" style={{opacity: 0.7}}>
-             Кто из знатоков уверен в триумфе?
-           </button>
+          (() => {
+            const triumphCount = room?.triumphDeclaredBy?.length || 0;
+            const hasTriumph = triumphCount > 0;
+            return (
+              <button 
+                className={`premium-btn triumph-btn ${hasTriumph ? 'triumph-active' : 'triumph-dimmed'}`} 
+                onClick={() => hasTriumph && setTriumphModalOpen(true)}
+                title={hasTriumph ? "Нажмите, чтобы увидеть список знатоков, заявивших о Триумфе" : "Пока никто из знатоков не заявил о Триумфе"}
+              >
+                {hasTriumph ? `⚡ Триумф заявлен (${triumphCount})` : "Кто из знатоков уверен в триумфе?"}
+              </button>
+            );
+          })()
         ) : (
-           <button 
-             className="premium-btn triumph-btn" 
-             onClick={handleTriumph} 
-             disabled={room?.triumphDeclaredBy?.includes(localStorage.getItem('chgk_username'))}
-             title="Заявить о своей уверенности в победе"
-           >
-             Заявить о грядущем Триумфе
-           </button>
-        )}
-        {role === 'host' && room?.triumphDeclaredBy && room.triumphDeclaredBy.length > 0 && (
-            <div style={{marginTop: '10px', color: 'var(--accent-gold)', fontWeight: 'bold', animation: 'pulse 1.5s infinite', display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-                {room.triumphDeclaredBy.map((user, i) => (
-                    <span key={i}>🐘 {user} заявил о Триумфе!</span>
-                ))}
-            </div>
+          <button 
+            className="premium-btn triumph-btn" 
+            onClick={handleTriumph} 
+            disabled={room?.triumphDeclaredBy?.includes(localStorage.getItem('chgk_username'))}
+            title="Заявить о своей уверенности в победе"
+          >
+            {room?.triumphDeclaredBy?.includes(localStorage.getItem('chgk_username')) ? "Вы заявили о Триумфе 🐘" : "Заявить о грядущем Триумфе"}
+          </button>
         )}
       </div>
 
@@ -226,6 +234,37 @@ export default function GameLobby({ role, roomId, room, playedQuestionsText, onP
       <button className="control-btn danger exit-btn" onClick={handleExit}>
         Покинуть Клуб
       </button>
+
+      {/* Модальное окно заявивших о Триумфе (для Крупье) */}
+      {triumphModalOpen && (
+        <div className="elite-modal-overlay" onClick={() => setTriumphModalOpen(false)}>
+          <div className="elite-modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3 className="elite-modal-title">Заявления о Триумфе</h3>
+            <p className="elite-modal-message">
+              Следующие знатоки дерзнули заявить о своей безоговорочной победе:
+            </p>
+            <div style={{ margin: '15px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {(room?.triumphDeclaredBy || []).map((user, i) => (
+                <div key={i} style={{ 
+                  background: 'rgba(212, 175, 55, 0.15)', 
+                  border: '1px solid var(--accent-gold)', 
+                  padding: '8px 12px', 
+                  borderRadius: '6px',
+                  color: 'var(--accent-gold)', 
+                  fontSize: '1.1rem', 
+                  fontWeight: 'bold',
+                  textAlign: 'center'
+                }}>
+                  🐘 {user}
+                </div>
+              ))}
+            </div>
+            <button className="premium-btn elite-modal-btn" onClick={() => setTriumphModalOpen(false)}>
+              Закрыть
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );

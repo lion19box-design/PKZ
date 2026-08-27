@@ -125,3 +125,57 @@
   margin-top: 2rem;
   align-self: flex-start;
 }
+
+/* --- Mobile Landscape Media Queries for Lobby --- */
+@media (max-height: 600px) and (orientation: landscape), (max-width: 950px) and (orientation: landscape) {
+  .lobby-panel {
+    max-height: 92vh;
+  }
+
+  .lobby-title {
+    font-size: 1.5rem;
+    padding-bottom: 4px;
+    margin-bottom: 0.2rem;
+  }
+
+  .welcome-text {
+    font-size: 0.85rem;
+    margin-bottom: 0.7rem;
+  }
+
+  .lobby-actions {
+    gap: 12px;
+  }
+
+  .action-card {
+    padding: 0.8rem 1rem;
+  }
+
+  .action-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+  }
+
+  .action-card p {
+    font-size: 0.75rem;
+    line-height: 1.3;
+    margin-bottom: 8px;
+  }
+
+  .code-input {
+    font-size: 1.1rem;
+    padding: 6px;
+    letter-spacing: 3px;
+  }
+
+  .create-btn, .join-btn {
+    padding: 8px;
+    font-size: 0.95rem;
+  }
+
+  .back-btn {
+    margin-top: 0.6rem;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+  }
+}

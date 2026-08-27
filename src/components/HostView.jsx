@@ -24,6 +24,7 @@ export default function HostView() {
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
   const [bbControlsOpen, setBbControlsOpen] = useState(false);
+  const [zoomQuestionModalOpen, setZoomQuestionModalOpen] = useState(false);
 
   const pendingRequests = room?.joinRequests || [];
   const hasPending = pendingRequests.length > 0;
@@ -218,15 +219,13 @@ export default function HostView() {
           <h2 style={{ fontSize: '2rem', marginBottom: '20px', color: 'var(--accent-gold)' }}>ИГРА ОКОНЧЕНА</h2>
           <p style={{ fontSize: '1.2rem', marginBottom: '20px' }}>Счет: Знатоки {room.score.experts} - {room.score.viewers} Зрители</p>
           
-          <h3 style={{ borderBottom: 'none' }}>Пул сыгранных вопросов</h3>
-          <p style={{ fontSize: '0.9rem', color: '#ccc', marginBottom: '10px' }}>
-            Скопируйте этот текст и вставьте в настройках для следующей игры.<br/>
-            <strong style={{color: '#ff9800'}}>Внимание:</strong> Если кнопка не сработала, обязательно сфотографируйте или сделайте скриншот этих чисел!
-          </p>
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
             <textarea 
+              id="host-played-ids"
+              name="playedQuestions"
+              aria-label="Сыгранные вопросы"
               className="premium-input" 
-              style={{ flex: 1, height: '100px', resize: 'none', marginBottom: 0 }}
+              style={{ flex: 1, height: '80px', resize: 'none', marginBottom: 0 }}
               value={getPlayedIds()}
               readOnly
             />
@@ -247,7 +246,7 @@ export default function HostView() {
             </button>
           </div>
           
-          <button className="premium-btn" style={{ width: '100%', padding: '15px', fontSize: '1.2rem' }} onClick={() => navigate('/')}>
+          <button className="premium-btn" style={{ width: '100%', padding: '12px', fontSize: '1.1rem' }} onClick={() => navigate('/')}>
             Вернуться в Главное Меню
           </button>
         </div>
@@ -258,8 +257,8 @@ export default function HostView() {
   return (
     <div className="game-container" style={{ backgroundImage: "url('/assets/krupie-room.png')" }}>
       {/* Header */}
-      <div className="game-header" style={{ paddingTop: 0, alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+      <div className="game-header">
+        <div className="host-header-actions">
           <button 
             className={`control-btn danger ${(room.canceledRounds >= 2) ? 'disabled' : ''}`} 
             style={{ filter: (room.canceledRounds >= 2) ? 'brightness(0.5)' : 'none' }}
@@ -267,10 +266,10 @@ export default function HostView() {
             title={(room.canceledRounds >= 2) ? 'Лимит аннуляций, доступных крупье - исчерпан. Если данный матч зашел в тупик - просим проследовать в лобби для начала новой игры' : ''}
             onClick={handleCancelRound}
           >
-            Аннулировать раунд
+            Аннулировать
           </button>
-          <button className="control-btn warning" onClick={() => setHistoryModalOpen(true)}>История вопросов</button>
-          <button className="control-btn danger" onClick={finishGame}>Завершить игру</button>
+          <button className="control-btn warning" onClick={() => setHistoryModalOpen(true)}>История</button>
+          <button className="control-btn danger" onClick={finishGame}>Завершить</button>
         </div>
         
 
@@ -293,15 +292,15 @@ export default function HostView() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginTop: '20px' }}>
-          {room.timerPenalty && <span style={{ color: '#f44336', fontWeight: 'bold' }}>⚠️ Минута урезана</span>}
-          {room.timerSpent && !room.timerEndsAt && <span style={{ color: '#ff9800', fontWeight: 'bold', background: 'rgba(0,0,0,0.5)', padding: '5px 10px', borderRadius: '5px' }}>⚠️ БАЗОВАЯ МИНУТА ПОТРАЧЕНА</span>}
+        <div className="host-header-controls">
+          {room.timerPenalty && <span style={{ color: '#f44336', fontWeight: 'bold', fontSize: '0.8rem' }}>⚠️ -20с</span>}
+          {room.timerSpent && !room.timerEndsAt && <span style={{ color: '#ff9800', fontWeight: 'bold', background: 'rgba(0,0,0,0.5)', padding: '3px 6px', borderRadius: '4px', fontSize: '0.75rem' }}>⚠️ БАЗОВАЯ МИНУТА</span>}
           {timeLeft !== null && (
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: timeLeft <= 10 ? '#f44336' : '#4caf50', minWidth: '80px', textAlign: 'center', fontFamily: 'monospace' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: timeLeft <= 10 ? '#f44336' : '#4caf50', minWidth: '60px', textAlign: 'center', fontFamily: 'monospace' }}>
               {formatTime(timeLeft)}
             </div>
           )}
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
             <button 
               className={`control-btn ${(!room.currentQuestion || !!room.timerEndsAt) ? 'disabled' : ''}`} 
               disabled={!room.currentQuestion || !!room.timerEndsAt} 
@@ -314,7 +313,7 @@ export default function HostView() {
               disabled={!room.timerEndsAt} 
               onClick={stopTimer}
             >
-              Остановить время
+              Стоп
             </button>
           </div>
           <button 
@@ -322,13 +321,13 @@ export default function HostView() {
             disabled={!!room.currentQuestion || isSpinning} 
             onClick={spinRoulette}
           >
-            Запустить рулетку
+            Рулетка
           </button>
 
           {(room.currentQuestion?.id?.toString().startsWith('BB') || room.currentQuestion?.assetUrl || room.currentQuestion?.bbItemAsset) && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginLeft: '20px', borderLeft: '2px solid #555', paddingLeft: '20px' }}>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <span style={{color: '#4caf50', fontWeight: 'bold'}}>ЧЕРНЫЙ ЯЩИК:</span>
+            <div className="host-bb-controls">
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <span style={{color: '#4caf50', fontWeight: 'bold', fontSize: '0.8rem'}}>ЧЯ:</span>
                 <button 
                   className={`control-btn ${room.blackBoxState !== 'hidden' ? 'disabled' : ''}`}
                   disabled={room.blackBoxState !== 'hidden'}
@@ -371,7 +370,7 @@ export default function HostView() {
               Панель штрафов <span>{penaltiesOpen ? '▲' : '▼'}</span>
             </h3>
             {penaltiesOpen && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
                 <button className="control-btn danger" style={{ fontSize: '0.8rem' }} onClick={() => showConfirm("Урезать минуту до 40 секунд? Жестоко, но правила есть правила.", () => socket.emit('applyPenalty', { roomId, penaltyType: 'time' }))}>Урезать время (-20 сек)</button>
                 <button className="control-btn danger" style={{ fontSize: '0.8rem' }} onClick={() => setPlayerSelectModal({ isOpen: true, type: 'remove_1_round' })}>Удалить игрока (1 раунд)</button>
                 <button className="control-btn danger" style={{ fontSize: '0.8rem' }} onClick={() => setPlayerSelectModal({ isOpen: true, type: 'remove_hat' })}>Лишить знатока шапки</button>
@@ -384,7 +383,7 @@ export default function HostView() {
               Палочки-выручалочки <span>{hintsOpen ? '▲' : '▼'}</span>
             </h3>
             {hintsOpen && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
                 <button className={`control-btn success ${room.hints.credit ? 'disabled' : ''}`} disabled={room.hints.credit} style={{ fontSize: '0.8rem' }} onClick={() => showConfirm("Выдаем минуту в кредит? Помните, долг платежом красен.", () => socket.emit('activateHint', { roomId, hintType: 'credit' }))}>Выдать "Минуту в кредит"</button>
                 <button className={`control-btn success ${room.hints.club || (room.score.experts === 5 && room.score.viewers === 5) ? 'disabled' : ''}`} disabled={room.hints.club || (room.score.experts === 5 && room.score.viewers === 5)} style={{ fontSize: '0.8rem' }} onClick={() => showConfirm("Клуб готов помочь! Активировать Помощь Клуба? Знатоки уверены, что зал не подведет?", () => socket.emit('activateHint', { roomId, hintType: 'club' }))}>Активировать "Помощь клуба"</button>
                 <button className={`control-btn success ${room.hints.host || (room.score.experts === 5 && room.score.viewers === 5) ? 'disabled' : ''}`} disabled={room.hints.host || (room.score.experts === 5 && room.score.viewers === 5)} style={{ fontSize: '0.8rem' }} onClick={() => showConfirm("Господин Ведущий снисходит до подсказки? Уверены, что хотите использовать 'Помощь Крупье'?", () => socket.emit('activateHint', { roomId, hintType: 'host' }))}>Выдать "Помощь Крупье"</button>
@@ -392,20 +391,32 @@ export default function HostView() {
             )}
           </div>
 
-
-
           <div className="glass-box" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-            <h3 style={{ borderBottom: 'none', marginBottom: '5px' }}>Вопрос</h3>
-            <p style={{ color: '#ccc', fontStyle: 'italic', marginBottom: '15px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h3 style={{ borderBottom: 'none', margin: 0 }}>Вопрос</h3>
+                {room.currentQuestion && (
+                  <button 
+                    className="circle-icon-btn"
+                    style={{ width: '24px', height: '24px', padding: '3px', cursor: 'pointer' }}
+                    title="Увеличить текст вопроса"
+                    onClick={() => setZoomQuestionModalOpen(true)}
+                  >
+                    <img src="/assets/magnifying-glass.svg" alt="Лупа" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  </button>
+                )}
+              </div>
+            </div>
+            <p style={{ color: '#ccc', fontStyle: 'italic', marginBottom: '10px' }}>
               {room.currentQuestion ? room.currentQuestion.questionText : "Вопрос не выбран. Крутите рулетку."}
             </p>
-            <h3 style={{ borderBottom: 'none', marginBottom: '5px', color: '#ff9800' }}>Правильный ответ</h3>
-            <p style={{ color: '#fff', fontWeight: 'bold', marginBottom: '15px' }}>
+            <h3 style={{ borderBottom: 'none', marginBottom: '4px', color: '#ff9800' }}>Правильный ответ</h3>
+            <p style={{ color: '#fff', fontWeight: 'bold', marginBottom: '10px' }}>
               {room.currentQuestion ? room.currentQuestion.answerText : ""}
             </p>
             {room.currentQuestion && room.currentQuestion.clubHint && (
                <>
-                 <h3 style={{ borderBottom: 'none', marginBottom: '5px', color: '#2196f3' }}>Подсказка клуба</h3>
+                 <h3 style={{ borderBottom: 'none', marginBottom: '4px', color: '#2196f3' }}>Подсказка клуба</h3>
                  <p style={{ color: '#fff', fontWeight: 'normal', fontStyle: 'italic' }}>
                    {room.currentQuestion.clubHint}
                  </p>
@@ -427,26 +438,18 @@ export default function HostView() {
         </div>
 
         {/* Профиль Зрителя (для Крупье) */}
-        <div className="glass-box" style={{ 
-          position: 'absolute', 
-          right: '20px', 
-          top: '100px', 
-          width: '200px', 
-          padding: '0', 
-          overflow: 'hidden', 
-          textAlign: 'center',
-          zIndex: 5
-        }}>
-          <div style={{ 
-            height: '240px', 
-            background: `url("${(room.currentQuestion && !isSpinning) ? room.currentQuestion.photoUrl : '/assets/zaglushka.png'}") center / cover`, 
-            borderBottom: '2px solid var(--accent-gold)' 
-          }}></div>
-          <div style={{ padding: '10px' }}>
+        <div className="glass-box host-viewer-card">
+          <div 
+            className="host-viewer-photo"
+            style={{ 
+              backgroundImage: `url("${(room.currentQuestion && !isSpinning) ? room.currentQuestion.photoUrl : '/assets/zaglushka.png'}")`
+            }}
+          ></div>
+          <div style={{ padding: '8px' }}>
             <h4 style={{ margin: 0, color: 'var(--accent-gold)', fontSize: '1rem', lineHeight: '1.2' }}>
                 {(room.currentQuestion && !isSpinning) ? room.currentQuestion.authorName : (room.playedSectors.length > 0 ? "Раунд завершен" : "Ожидание")}
             </h4>
-            <p style={{ margin: '5px 0 0 0', color: '#ccc', fontSize: '0.8rem' }}>
+            <p style={{ margin: '4px 0 0 0', color: '#ccc', fontSize: '0.8rem' }}>
                 {(room.currentQuestion && !isSpinning) ? `${room.currentQuestion.job}, г. ${room.currentQuestion.city}` : (room.playedSectors.length > 0 ? "Очко начислено. Запускайте рулетку для продолжения игры." : "Игра началась. Запускайте рулетку.")}
             </p>
           </div>
@@ -586,74 +589,36 @@ export default function HostView() {
         </div>
       )}
 
-      <div style={{
-        position: 'absolute', 
-        bottom: '20px', 
-        right: '20px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '15px',
-        zIndex: 100
-      }}>
-        <div className="room-code-display" style={{
-          color: 'var(--accent-gold)',
-          fontSize: '1.2rem',
-          textShadow: '0 0 10px rgba(255, 215, 0, 0.5)',
-          background: 'rgba(0,0,0,0.5)',
-          padding: '10px 15px',
-          borderRadius: '5px',
-          border: '1px solid var(--accent-gold)',
-          whiteSpace: 'nowrap'
-        }}>
+      <div className="host-bottom-bar">
+        <div className="room-code-display">
           Код комнаты: {roomId}
         </div>
         
         <button 
           onClick={() => setRulebookOpen(true)}
-          style={{
-            background: 'rgba(0,0,0,0.6)',
-            border: '1px solid var(--accent-gold)',
-            borderRadius: '50%',
-            width: '50px',
-            height: '50px',
-            cursor: 'pointer',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            transition: 'all 0.3s',
-            padding: 0
-          }}
+          className="circle-icon-btn"
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           title="Справочник Крупье"
         >
-          <img src="/assets/book-with-rules.svg" alt="Rulebook" style={{ width: '26px', height: '26px' }} />
+          <img src="/assets/book-with-rules.svg" alt="Rulebook" style={{ width: '24px', height: '24px' }} />
         </button>
 
         <VolumeControl align="right" style={{ position: 'relative', bottom: 'auto', left: 'auto', right: 'auto', zIndex: 100 }} />
 
         <button 
           onClick={() => setJoinRequestsModal(true)}
+          className="circle-icon-btn"
           style={{
-            background: 'rgba(0,0,0,0.6)',
             border: hasPending ? '2px solid #f44336' : '1px solid var(--accent-gold)',
-            borderRadius: '50%',
-            width: '50px',
-            height: '50px',
-            cursor: 'pointer',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            transition: 'all 0.3s',
-            padding: 0,
             position: 'relative'
           }}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           title={`Заявки на вход (${pendingRequests.length})`}
         >
-          <img src="/assets/mail.svg" alt="Mail" style={{ width: '24px', height: '24px', filter: hasPending ? 'none' : 'opacity(0.6)' }} />
-          {hasPending && <div style={{ position: 'absolute', top: '5px', right: '5px', background: '#f44336', width: '12px', height: '12px', borderRadius: '50%' }}></div>}
+          <img src="/assets/mail.svg" alt="Mail" style={{ width: '22px', height: '22px', filter: hasPending ? 'none' : 'opacity(0.6)' }} />
+          {hasPending && <div style={{ position: 'absolute', top: '4px', right: '4px', background: '#f44336', width: '10px', height: '10px', borderRadius: '50%' }}></div>}
         </button>
       </div>
       {/* Модальное окно истории вопросов */}
@@ -713,6 +678,92 @@ export default function HostView() {
             
             <div className="modal-buttons" style={{ marginTop: '30px', justifyContent: 'center' }}>
               <button className="control-btn" onClick={() => setHistoryModalOpen(false)}>Закрыть</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно увеличения текста вопроса (Лупа) */}
+      {zoomQuestionModalOpen && room?.currentQuestion && (
+        <div className="elite-modal-overlay" onClick={() => setZoomQuestionModalOpen(false)}>
+          <div 
+            className="elite-modal-content" 
+            style={{ 
+              maxWidth: '800px', 
+              width: '92vw', 
+              maxHeight: '90vh', 
+              maxHeight: '90dvh',
+              overflowY: 'auto',
+              position: 'relative',
+              padding: '20px 25px',
+              textAlign: 'left'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setZoomQuestionModalOpen(false)}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '15px',
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--accent-gold)',
+                fontSize: '1.6rem',
+                cursor: 'pointer',
+                lineHeight: 1
+              }}
+              title="Закрыть"
+            >
+              ✕
+            </button>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', borderBottom: '1px solid rgba(212,175,55,0.4)', paddingBottom: '8px' }}>
+              <img src="/assets/magnifying-glass.svg" alt="Лупа" style={{ width: '28px', height: '28px' }} />
+              <h2 style={{ margin: 0, color: 'var(--accent-gold)', fontFamily: 'var(--font-serif)', fontSize: '1.35rem' }}>
+                Вопрос {room.currentQuestion.id ? `(${room.currentQuestion.id})` : ''} — Сектор {room.targetSector === 0 ? 'ЧЯ' : room.targetSector}
+              </h2>
+            </div>
+
+            <div style={{
+              background: 'rgba(0,0,0,0.6)',
+              padding: '16px 20px',
+              borderRadius: '8px',
+              border: '1px solid rgba(212,175,55,0.3)',
+              marginBottom: '16px',
+              maxHeight: '45vh',
+              overflowY: 'auto'
+            }}>
+              <p style={{
+                fontSize: '1.25rem',
+                lineHeight: '1.55',
+                color: '#fff',
+                fontFamily: 'var(--font-serif)',
+                margin: 0
+              }}>
+                {room.currentQuestion.questionText}
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+              <div style={{ color: '#ff9800', fontWeight: 'bold', fontSize: '1.05rem' }}>
+                Правильный ответ: <span style={{ color: '#fff', fontWeight: 'bold' }}>{room.currentQuestion.answerText}</span>
+              </div>
+              {room.currentQuestion.clubHint && (
+                <div style={{ color: '#2196f3', fontWeight: 'bold', fontSize: '0.95rem' }}>
+                  Подсказка клуба: <span style={{ color: '#ccc', fontWeight: 'normal', fontStyle: 'italic' }}>{room.currentQuestion.clubHint}</span>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '15px' }}>
+              <button 
+                className="premium-btn" 
+                style={{ minWidth: '160px', padding: '10px 24px', fontSize: '1rem' }}
+                onClick={() => setZoomQuestionModalOpen(false)}
+              >
+                Закрыть [X]
+              </button>
             </div>
           </div>
         </div>

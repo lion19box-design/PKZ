@@ -15,6 +15,15 @@ function App() {
       <div className="app-container">
         {/* ЭЛТ фильтр поверх всего приложения */}
         <div className="crt-overlay"></div>
+
+        {/* Предупреждение для портретной ориентации */}
+        <div className="rotate-device-prompt">
+          <div className="rotate-device-icon">🔄</div>
+          <div className="rotate-device-title">Элитарный Клуб</div>
+          <div className="rotate-device-desc">
+            Пожалуйста, переверните устройство в горизонтальный режим (альбомная ориентация) для игры.
+          </div>
+        </div>
         
         <Routes>
           <Route path="/" element={<MainMenu />} />

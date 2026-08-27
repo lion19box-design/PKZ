@@ -71,3 +71,34 @@
   border-color: #999;
   box-shadow: 0 0 10px rgba(150, 150, 150, 0.3);
 }
+
+/* --- Mobile Landscape Media Queries for EliteNotification --- */
+@media (max-height: 600px) and (orientation: landscape), (max-width: 950px) and (orientation: landscape) {
+  .elite-modal-content {
+    padding: 14px 20px;
+    max-width: 420px;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+
+  .elite-modal-title {
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+  }
+
+  .elite-modal-message {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 14px;
+  }
+
+  .elite-modal-actions {
+    gap: 10px;
+  }
+
+  .elite-modal-btn {
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    min-width: 90px;
+  }
+}

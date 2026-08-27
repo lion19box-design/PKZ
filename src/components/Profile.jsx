@@ -49,7 +49,7 @@ export default function Profile() {
   
   const [currentAwardObj, setCurrentAwardObj] = useState(null);
   
-  const audioRef = useRef(new Audio("/assets/audio/elitist-music/Le Cercle de l'Élite.mp3"));
+  const audioRef = useRef(new Audio("/assets/audio/elitist-music/Le Cercle de l'Elite.mp3"));
   const awardAudioRef = useRef(new Audio("/assets/audio/sound-effects/awarding-of-the-prize.mp3"));
   
   const navigate = useNavigate();
@@ -78,7 +78,9 @@ export default function Profile() {
     const playPromise = audioRef.current.play();
     if (playPromise !== undefined) {
       playPromise.catch(error => {
-         console.log("Audio autoplay prevented", error);
+        if (error.name !== 'AbortError') {
+          console.log("Audio autoplay prevented", error);
+        }
       });
     }
 

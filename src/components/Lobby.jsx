@@ -102,6 +102,9 @@ export default function Lobby() {
                 <p>Присоединитесь к существующему столу по 4-значному коду от Крупье.</p>
                 <form onSubmit={handleJoinRoom} className="join-form">
                   <input 
+                    id="lobby-join-code"
+                    name="roomCode"
+                    aria-label="4-значный код комнаты"
                     type="text" 
                     placeholder="Код (4 цифры)" 
                     value={joinCode} 

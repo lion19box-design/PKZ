@@ -38,7 +38,7 @@ export default function MainMenu() {
   // Audio refs
   const mainAudioRef = useRef(new Audio("/assets/audio/elitist-music/The Owl's Lounge.mp3"));
   const modalAudioRef = useRef(new Audio("/assets/audio/elitist-music/Ode alla Mente.mp3"));
-  const customAudioRef = useRef(new Audio("/assets/audio/elitist-music/Le Cercle de l'Élite.mp3"));
+  const customAudioRef = useRef(new Audio("/assets/audio/elitist-music/Le Cercle de l'Elite.mp3"));
   const flightAudioRef = useRef(new Audio("/assets/audio/elitist-music/Flight with the Crystal Owl.mp3"));
   const lightningAudioRef = useRef(new Audio("/assets/audio/sound-effects/owl-disturbed-lightning.mp3"));
 
@@ -187,49 +187,26 @@ export default function MainMenu() {
   return (
     <div className="main-menu">
       <div className="glass-panel" style={{position: 'relative', zIndex: 2}}>
-        <div style={{textAlign: 'center', marginBottom: '20px'}}>
+        <div className="owl-avatar-container">
           <img 
             src={owlSrc} 
             alt="Хрустальная сова" 
             onClick={handleOwlClick}
-            style={{
-              width: '120px', 
-              height: '120px', 
-              borderRadius: '50%', 
-              cursor: 'pointer',
-              boxShadow: isDisturbed ? '0 0 30px 10px rgba(128,0,128,0.7)' : '0 0 15px rgba(255,215,0,0.5)',
-              transition: 'all 0.3s ease',
-              border: '2px solid var(--accent-gold)'
-            }} 
+            className={`owl-avatar ${isDisturbed ? 'disturbed' : ''}`}
           />
         </div>
         <h1 className="game-title">Почему? Куда? Зачем?</h1>
         <h2 className="game-subtitle">Элитарный клуб</h2>
 
         {isLoggedIn ? (
-          <div className="logged-in-menu" style={{ textAlign: 'center' }}>
-            <h3 style={{color: 'var(--accent-gold)', marginBottom: '30px', fontSize: '1.5rem'}}>Добро пожаловать, {username}</h3>
+          <div className="logged-in-menu">
+            <h3 className="welcome-greeting">Добро пожаловать, {username}</h3>
             <button 
-              className="premium-btn" 
-              style={{fontSize: '1.5rem', padding: '15px 40px', marginBottom: '20px', width: '100%'}}
+              className="premium-btn play-btn"
               onClick={() => navigate('/lobby')}
             >
               ИГРАТЬ
             </button>
-            <div>
-              <button 
-                className="control-btn danger"
-                style={{marginTop: '20px', padding: '10px 20px'}}
-                onClick={() => {
-                  localStorage.removeItem('chgk_username');
-                  setIsLoggedIn(false);
-                  setUsername('');
-                  setPassword('');
-                }}
-              >
-                Выйти из аккаунта
-              </button>
-            </div>
           </div>
         ) : (
           <form onSubmit={handleLogin} className="login-form">
@@ -239,16 +216,24 @@ export default function MainMenu() {
                </div>
             )}
             <input 
+              id="main-username"
+              name="username"
               type="text" 
               placeholder="Никнейм" 
+              aria-label="Никнейм игрока"
+              autoComplete="username"
               value={username} 
               onChange={(e) => setUsername(e.target.value)} 
               className="premium-input"
               required
             />
             <input 
+              id="main-password"
+              name="password"
               type="password" 
               placeholder="Пароль" 
+              aria-label="Пароль"
+              autoComplete={isRegistering ? "new-password" : "current-password"}
               value={password} 
               onChange={(e) => setPassword(e.target.value)} 
               className="premium-input"
@@ -397,17 +382,42 @@ export default function MainMenu() {
               <>
                 <h2>Настройки</h2>
                 <div className="settings-group">
-                  <label>Громкость (Глобально)</label>
-                  <input type="range" min="0" max="100" value={volume} onChange={(e) => setVolume(e.target.value)} />
+                  <label htmlFor="settings-volume">Громкость (Глобально)</label>
+                  <input 
+                    id="settings-volume" 
+                    name="volume" 
+                    aria-label="Громкость глобально"
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    value={volume} 
+                    onChange={(e) => setVolume(e.target.value)} 
+                  />
                 </div>
                 <div className="settings-group">
-                  <label>Сложность вопросов</label>
-                  <input type="range" min="0" max="100" value={difficulty} onChange={handleDifficultyChange} />
+                  <label htmlFor="settings-difficulty">Сложность вопросов</label>
+                  <input 
+                    id="settings-difficulty" 
+                    name="difficulty" 
+                    aria-label="Сложность вопросов"
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    value={difficulty} 
+                    onChange={handleDifficultyChange} 
+                  />
                   <div className="setting-desc">В элитарном клубе соревнуются лучшие умы, торг за сложность неуместен.</div>
                 </div>
                 <div className="settings-group">
-                  <label className="toggle-switch">
-                    <input type="checkbox" checked={crtEnabled} onChange={handleCrtToggle} />
+                  <label className="toggle-switch" htmlFor="settings-crt">
+                    <input 
+                      id="settings-crt" 
+                      name="crtEnabled" 
+                      aria-label="ЭЛТ-фильтр"
+                      type="checkbox" 
+                      checked={crtEnabled} 
+                      onChange={handleCrtToggle} 
+                    />
                     ЭЛТ-фильтр (Эффект старого ТВ)
                   </label>
                 </div>
@@ -459,6 +469,21 @@ export default function MainMenu() {
             )}
           </div>
         </div>
+      )}
+
+      {isLoggedIn && (
+        <button 
+          className="circle-icon-btn main-menu-exit-btn"
+          onClick={() => {
+            localStorage.removeItem('chgk_username');
+            setIsLoggedIn(false);
+            setUsername('');
+            setPassword('');
+          }}
+          title="Выйти из аккаунта"
+        >
+          <img src="/assets/door-exit.svg" alt="Выйти" />
+        </button>
       )}
     </div>
   );
