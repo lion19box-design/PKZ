@@ -40,6 +40,15 @@ function clearRoomTimer(roomId) {
   }
 }
 
+// Health check endpoint для UptimeRobot и мониторинга
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', service: 'PKZ Backend', time: new Date().toISOString() });
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
 app.post('/api/auth/register', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Заполните все поля' });
