@@ -40,29 +40,28 @@ function clearRoomTimer(roomId) {
   }
 }
 
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Заполните все поля' });
 
   try {
+    const existing = await db.getUserByUsername(username);
+    if (existing) {
+      return res.status(400).json({ error: 'Пользователь уже существует' });
+    }
     const hash = bcrypt.hashSync(password, 10);
-    const stmt = db.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)');
-    const info = stmt.run(username, hash);
+    const info = await db.createUser(username, hash);
     res.json({ success: true, id: info.lastInsertRowid });
   } catch (error) {
-    if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-      res.status(400).json({ error: 'Пользователь уже существует' });
-    } else {
-      res.status(500).json({ error: 'Внутренняя ошибка' });
-    }
+    res.status(500).json({ error: 'Внутренняя ошибка' });
   }
 });
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
   
   try {
-    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+    const user = await db.getUserByUsername(username);
     if (user && bcrypt.compareSync(password, user.password_hash)) {
       res.json({ success: true, username: user.username, stats: { played: user.games_played, wins: user.wins }});
     } else {
@@ -93,10 +92,10 @@ const evaluateAwards = (wins) => {
   return newAwards;
 };
 
-app.get('/api/profile/:username', (req, res) => {
+app.get('/api/profile/:username', async (req, res) => {
   const { username } = req.params;
   try {
-    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+    const user = await db.getUserByUsername(username);
     if (user) {
       res.json({ 
         success: true, 
@@ -120,24 +119,20 @@ app.get('/api/profile/:username', (req, res) => {
   }
 });
 
-app.post('/api/profile/equip', (req, res) => {
+app.post('/api/profile/equip', async (req, res) => {
   const { username, type, itemId } = req.body;
   try {
-    if (type === 'avatar') {
-      db.prepare('UPDATE users SET active_avatar = ? WHERE username = ?').run(itemId, username);
-    } else if (type === 'hat') {
-      db.prepare('UPDATE users SET active_hat = ? WHERE username = ?').run(itemId, username);
-    }
+    await db.updateUserEquipment(username, type, itemId);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Внутренняя ошибка' });
   }
 });
 
-app.post('/api/profile/claim-award', (req, res) => {
+app.post('/api/profile/claim-award', async (req, res) => {
   const { username, awardId } = req.body;
   try {
-    const user = db.prepare('SELECT unlocked_owls, pending_awards FROM users WHERE username = ?').get(username);
+    const user = await db.getUserByUsername(username);
     if (user) {
       let pending = JSON.parse(user.pending_awards || '[]');
       let unlocked = JSON.parse(user.unlocked_owls || '[]');
@@ -146,8 +141,7 @@ app.post('/api/profile/claim-award', (req, res) => {
         pending = pending.filter(id => id !== awardId);
         if (!unlocked.includes(awardId)) unlocked.push(awardId);
         
-        db.prepare('UPDATE users SET pending_awards = ?, unlocked_owls = ? WHERE username = ?')
-          .run(JSON.stringify(pending), JSON.stringify(unlocked), username);
+        await db.updateUserAwards(username, pending, unlocked);
           
         res.json({ success: true, pending, unlocked });
       } else {
@@ -188,7 +182,7 @@ io.on('connection', (socket) => {
     callback({ roomId });
   });
 
-  socket.on('joinRoom', ({ roomId, username, isHost }, callback) => {
+  socket.on('joinRoom', async ({ roomId, username, isHost }, callback) => {
     const room = rooms.get(roomId);
     if (room) {
       if (!isHost && room.hostUsername === username) {
@@ -200,7 +194,7 @@ io.on('connection', (socket) => {
         let active_avatar = 'avatar_boss.jpg';
         let active_hat = null;
         try {
-          const user = db.prepare('SELECT active_avatar, active_hat FROM users WHERE username = ?').get(username);
+          const user = await db.getUserByUsername(username);
           if (user) {
             active_avatar = user.active_avatar || 'avatar_boss.jpg';
             active_hat = user.active_hat;
@@ -496,7 +490,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('adjustScore', ({ roomId, team, delta }) => {
+  socket.on('adjustScore', async ({ roomId, team, delta }) => {
     const room = rooms.get(roomId);
     if (room && socket.id === room.host) {
       room.score[team] = Math.max(0, room.score[team] + delta);
@@ -529,9 +523,9 @@ io.on('connection', (socket) => {
 
         // Обновляем статистику в БД для всех игроков
         const expertsWon = room.score.experts === 6;
-        room.players.forEach(p => {
+        for (const p of room.players) {
            try {
-             const user = db.prepare('SELECT * FROM users WHERE username = ?').get(p.username);
+             const user = await db.getUserByUsername(p.username);
              if (user) {
                let wins = user.wins;
                let losses = user.losses;
@@ -555,13 +549,12 @@ io.on('connection', (socket) => {
                  }
                });
                
-               db.prepare('UPDATE users SET games_played = ?, wins = ?, losses = ?, pending_awards = ? WHERE username = ?')
-                 .run(played, wins, losses, JSON.stringify(pending), p.username);
+               await db.updateUserStats(p.username, played, wins, losses, pending);
              }
             } catch(e) {
               console.error("DB Update error for user", p.username, e);
             }
-         });
+         }
          
          setTimeout(() => {
             const r = rooms.get(roomId);
@@ -711,6 +704,7 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
+  await db.initDb();
   console.log(`Backend server running on port ${PORT}`);
 });

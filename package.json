@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.4",
     "@vercel/analytics": "^2.0.1",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.11.1",
