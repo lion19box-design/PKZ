@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import MainMenu from './components/MainMenu';
 import Lobby from './components/Lobby';
 import HostView from './components/HostView';
@@ -12,6 +13,7 @@ function App() {
   return (
     <EliteNotificationProvider>
       <GlobalAudio />
+      <Analytics />
       <div className="app-container">
         {/* ЭЛТ фильтр поверх всего приложения */}
         <div className="crt-overlay"></div>
