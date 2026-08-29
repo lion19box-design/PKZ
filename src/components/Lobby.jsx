@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { socket } from '../socket';
+import { useEliteNotification } from './EliteNotification';
 import './Lobby.css';
 
 export default function Lobby() {
+  const { showAlert } = useEliteNotification();
   const [username, setUsername] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState('');
@@ -23,7 +25,7 @@ export default function Lobby() {
       if (response && response.roomId) {
         navigate(`/host/${response.roomId}`);
       } else {
-        setError('Не удалось создать комнату');
+        showAlert('Распорядителям клуба не удалось развернуть новый игровой стол. Попробуйте еще раз.', 'Зал Ожидания');
       }
     });
   };
@@ -37,7 +39,7 @@ export default function Lobby() {
     };
     const handleRejected = () => {
       setIsPending(false);
-      setError('Господин крупье постановил не пущать');
+      showAlert('Господин Крупье отклонил ваш запрос на присоединение к игре.', 'Вердикт Крупье');
     };
     
     socket.on('joinRequestApproved', handleApproved);
@@ -47,12 +49,12 @@ export default function Lobby() {
       socket.off('joinRequestApproved', handleApproved);
       socket.off('joinRequestRejected', handleRejected);
     };
-  }, [navigate]);
+  }, [navigate, showAlert]);
 
   const handleJoinRoom = (e) => {
     e.preventDefault();
     if (joinCode.length !== 4) {
-      setError('Код комнаты должен состоять из 4 цифр');
+      showAlert('Шифр игрового стола должен состоять ровно из 4 цифр!', 'Зал Ожидания');
       return;
     }
     
@@ -66,7 +68,7 @@ export default function Lobby() {
            navigate(`/expert/${joinCode}`);
         }
       } else {
-        setError(response.error || 'Ошибка подключения');
+        showAlert(response?.error || 'Не удалось занять место за столом. Проверьте шифр комнаты.', 'Зал Ожидания');
       }
     });
   };

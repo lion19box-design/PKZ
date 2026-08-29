@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SERVER_URL } from '../socket';
+import { useEliteNotification } from './EliteNotification';
 import './MainMenu.css';
 
 export default function MainMenu() {
+  const { showAlert } = useEliteNotification();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
@@ -137,7 +139,7 @@ export default function MainMenu() {
       let data = await res.json();
       
       if (!res.ok) {
-         alert(data.error || 'Ошибка авторизации');
+         showAlert(data.error || 'Двери клуба временно заперты. Не удалось авторизоваться.', 'Реестр Знатоков');
          return false;
       }
       
@@ -145,7 +147,7 @@ export default function MainMenu() {
       return true;
     } catch (err) {
       console.error(err);
-      alert('Ошибка соединения с сервером');
+      showAlert('Связь с залом прервалась! Телеграфисты клуба уже разбираются с помехами на линии. Проверьте подключение.', 'Помехи в эфире');
       return false;
     }
   };
@@ -159,7 +161,7 @@ export default function MainMenu() {
 
   const handleProfileClick = async () => {
     if (!username || !password) {
-      alert('Пожалуйста, введите Никнейм и Пароль для доступа к профилю.');
+      showAlert('Позвольте! Чтобы войти в личную гардеробную, необходимо представиться и назвать пароль.', 'Канцелярия Клуба');
       return;
     }
     if (await performAuth()) {

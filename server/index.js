@@ -51,18 +51,18 @@ app.get('/health', (req, res) => {
 
 app.post('/api/auth/register', async (req, res) => {
   const { username, password } = req.body;
-  if (!username || !password) return res.status(400).json({ error: 'Заполните все поля' });
+  if (!username || !password) return res.status(400).json({ error: 'Господа, инкогнито в Элитарный Клуб не допускаются. Извольте указать имя и пароль!' });
 
   try {
     const existing = await db.getUserByUsername(username);
     if (existing) {
-      return res.status(400).json({ error: 'Пользователь уже существует' });
+      return res.status(400).json({ error: 'Знаток с таким именем уже числится в рядах нашего Клуба! Если это ваша персона — извольте войти под своим паролем. Если нет — выберите другое достойное имя.' });
     }
     const hash = bcrypt.hashSync(password, 10);
     const info = await db.createUser(username, hash);
     res.json({ success: true, id: info.lastInsertRowid });
   } catch (error) {
-    res.status(500).json({ error: 'Внутренняя ошибка' });
+    res.status(500).json({ error: 'Распорядители клуба столкнулись с непредвиденной заминкой. Попробуйте снова чуть позже.' });
   }
 });
 
@@ -74,10 +74,10 @@ app.post('/api/auth/login', async (req, res) => {
     if (user && bcrypt.compareSync(password, user.password_hash)) {
       res.json({ success: true, username: user.username, stats: { played: user.games_played, wins: user.wins }});
     } else {
-      res.status(401).json({ error: 'Неверный логин или пароль' });
+      res.status(401).json({ error: 'Крупье не находит такой комбинации в реестре знатоков. Проверьте имя или освежите память о пароле.' });
     }
   } catch (error) {
-    res.status(500).json({ error: 'Внутренняя ошибка' });
+    res.status(500).json({ error: 'Распорядители клуба столкнулись с непредвиденной заминкой. Попробуйте снова чуть позже.' });
   }
 });
 
@@ -213,12 +213,12 @@ io.on('connection', (socket) => {
         }
 
         if (room.hostUsername === username) {
-           callback({ success: false, error: 'Крупье не может быть знатоком в своей игре' });
+           callback({ success: false, error: 'Крупье не подобает занимать место знатока за собственным столом!' });
            return;
         }
 
         if (room.bannedUsers && room.bannedUsers[username] && (Date.now() - room.bannedUsers[username] < 30 * 1000)) {
-           callback({ success: false, error: 'Господин крупье постановил не пущать. Подождите 30 секунд.' });
+           callback({ success: false, error: 'Господин крупье постановил не пущать. Извольте выждать 30 секунд штрафного времени.' });
            return;
         }
 
@@ -260,7 +260,7 @@ io.on('connection', (socket) => {
         }
       } else {
         if (room.hostUsername && room.hostUsername !== username && room.host) {
-           callback({ success: false, error: 'В этой комнате уже есть Крупье' });
+           callback({ success: false, error: 'Место распорядителя (Крупье) за этим столом уже занято!' });
            return;
         }
         room.host = socket.id;
@@ -270,7 +270,7 @@ io.on('connection', (socket) => {
         callback({ success: true, room, isHost: true });
       }
     } else {
-      callback({ success: false, error: 'Комната не найдена' });
+      callback({ success: false, error: 'Игровой стол с таким шифром не найден в залах Клуба.' });
     }
   });
 
@@ -311,8 +311,8 @@ io.on('connection', (socket) => {
     if (room && socket.id === room.host) {
       const availableQuestions = questionsData.filter(q => !room.playedQuestionsIds.includes(q.id));
       
-      if (availableQuestions.length < 13) {
-         if (callback) callback({ success: false, error: `Недостаточно несыгранных вопросов. Доступно: ${availableQuestions.length}, нужно: 13.` });
+      if (availableQuestions.length < 15) {
+         if (callback) callback({ success: false, error: `В распоряжении Крупье недостаточно свежих писем от телезрителей (осталось ${availableQuestions.length} из 15). Извольте очистить список сыгранных вопросов!` });
          return;
       }
       
@@ -324,7 +324,7 @@ io.on('connection', (socket) => {
       }
       
       const randomBB = blackBoxQuestions[Math.floor(Math.random() * blackBoxQuestions.length)];
-      room.gameQuestions = [randomBB, ...shuffled.slice(0, 12)];
+      room.gameQuestions = [randomBB, ...shuffled.slice(0, 15)];
       room.state = 'playing';
       room.blackBoxState = 'hidden';
       
@@ -343,9 +343,9 @@ io.on('connection', (socket) => {
   socket.on('spinRoulette', ({ roomId }) => {
     const room = rooms.get(roomId);
     if (room && socket.id === room.host) {
-      // Ищем несыгранные сектора (0-12)
+      // Ищем несыгранные сектора (0-15: 0 - Черный Ящик, 1-15 - конверты зрителей)
       const availableSectors = [];
-      for (let i = 0; i < 13; i++) {
+      for (let i = 0; i < 16; i++) {
         if (!room.playedSectors.includes(i) && room.gameQuestions[i]) {
           // Запрет нулевого сектора в первом и финальном раундах
           if (room.playedSectors.length === 0 && i === 0) continue;
