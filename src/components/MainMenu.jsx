@@ -251,7 +251,7 @@ export default function MainMenu() {
                 onClick={handleSwitchToAccount}
                 title="Авторизоваться или создать полноценный аккаунт знатока"
               >
-                <img src="/assets/icons/pen.svg" alt="выйти из тени" className="guest-btn-icon" />
+                <img src="/assets/icons/profile.svg" alt="выйти из тени" className="guest-btn-icon" />
                 <span>Войти в аккаунт <small>(Выйти из тени)</small></span>
               </button>
             )}
