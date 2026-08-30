@@ -39,12 +39,16 @@ export default function ExpertView() {
       return;
     }
 
+    const isGuest = localStorage.getItem('chgk_is_guest') === 'true';
     const joinAsExpert = () => {
-      socket.emit('joinRoom', { roomId, username, isHost: false }, (res) => {
+      socket.emit('joinRoom', { roomId, username, isHost: false, isGuest }, (res) => {
         if (!res || !res.success) {
           showAlert((res && res.error) || 'Ошибка подключения');
           navigate('/');
         } else {
+          if (res.assignedUsername && res.assignedUsername !== username) {
+            localStorage.setItem('chgk_username', res.assignedUsername);
+          }
           setRoom(res.room);
           setGameState(res.room.state === 'waiting' ? 'setup' : res.room.state);
         }

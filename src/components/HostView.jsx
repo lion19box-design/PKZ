@@ -58,12 +58,16 @@ export default function HostView() {
       return;
     }
 
+    const isGuest = localStorage.getItem('chgk_is_guest') === 'true';
     const joinAsHost = () => {
-      socket.emit('joinRoom', { roomId, username, isHost: true }, (res) => {
+      socket.emit('joinRoom', { roomId, username, isHost: true, isGuest }, (res) => {
         if (!res || !res.success) {
           showAlert((res && res.error) || 'Ошибка подключения');
           navigate('/');
         } else {
+          if (res.assignedUsername && res.assignedUsername !== username) {
+            localStorage.setItem('chgk_username', res.assignedUsername);
+          }
           setRoom(res.room);
           setPlayedQuestionsText(res.room.playedQuestionsIds.join(', '));
           setGameState(res.room.state === 'waiting' ? 'setup' : res.room.state);

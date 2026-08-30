@@ -21,7 +21,8 @@ export default function Lobby() {
   }, [navigate]);
 
   const handleCreateRoom = () => {
-    socket.emit('createRoom', { username }, (response) => {
+    const isGuest = localStorage.getItem('chgk_is_guest') === 'true';
+    socket.emit('createRoom', { username, isGuest }, (response) => {
       if (response && response.roomId) {
         navigate(`/host/${response.roomId}`);
       } else {
@@ -58,8 +59,13 @@ export default function Lobby() {
       return;
     }
     
-    socket.emit('joinRoom', { roomId: joinCode, username }, (response) => {
+    const isGuest = localStorage.getItem('chgk_is_guest') === 'true';
+    socket.emit('joinRoom', { roomId: joinCode, username, isGuest }, (response) => {
       if (response && response.success) {
+        if (response.assignedUsername && response.assignedUsername !== username) {
+          localStorage.setItem('chgk_username', response.assignedUsername);
+          setUsername(response.assignedUsername);
+        }
         if (response.status === 'pending') {
            setIsPending(true);
         } else if (response.isHost) {

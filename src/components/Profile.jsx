@@ -57,7 +57,8 @@ export default function Profile() {
   const username = localStorage.getItem('chgk_username');
 
   useEffect(() => {
-    if (!username) {
+    const isGuest = localStorage.getItem('chgk_is_guest') === 'true';
+    if (!username || isGuest) {
       navigate('/');
       return;
     }

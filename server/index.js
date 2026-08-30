@@ -51,7 +51,7 @@ app.get('/health', (req, res) => {
 
 app.post('/api/auth/register', async (req, res) => {
   const { username, password } = req.body;
-  if (!username || !password) return res.status(400).json({ error: 'Господа, инкогнито в Элитарный Клуб не допускаются. Извольте указать имя и пароль!' });
+  if (!username || !password) return res.status(400).json({ error: 'Господа, внесение в официальный реестр Клуба требует строгой точности. Извольте указать и имя, и пароль!' });
 
   try {
     const existing = await db.getUserByUsername(username);
@@ -162,15 +162,59 @@ app.post('/api/profile/claim-award', async (req, res) => {
   }
 });
 
+// Список благородных камней для гостей
+const GEMSTONES = [
+  'Рубин', 'Сапфир', 'Изумруд', 'Аметист', 'Топаз', 'Алмаз',
+  'Опал', 'Агат', 'Малахит', 'Нефрит', 'Гранат', 'Янтарь',
+  'Александрит', 'Цитрин', 'Бирюза', 'Оникс', 'Турмалин', 'Лазурит',
+  'Аквамарин', 'Шпинель', 'Хризолит', 'Сердолик', 'Яшма', 'Чароит',
+  'Танзанит', 'Берилл', 'Халцедон', 'Хризопраз', 'Циркон', 'Корунд'
+];
+
+function resolveGuestName(room, requestedName) {
+  const isGuest = requestedName === 'Гость' || requestedName.startsWith('Гость-') || requestedName.startsWith('Гость ');
+  if (!isGuest) return requestedName;
+
+  const usedNames = new Set([
+    ...(room.hostUsername ? [room.hostUsername] : []),
+    ...room.players.map(p => p.username),
+    ...(room.joinRequests || []).map(r => r.username)
+  ]);
+
+  // Если это имя Гость-Камень и оно свободно — оставляем
+  if (requestedName.startsWith('Гость-') && !usedNames.has(requestedName)) {
+    return requestedName;
+  }
+
+  // Если имя "Гость" и в комнате еще нет ни одного гостя — оставляем "Гость"
+  if (requestedName === 'Гость') {
+    const hasAnyGuest = Array.from(usedNames).some(n => n === 'Гость' || n.startsWith('Гость-'));
+    if (!hasAnyGuest) {
+      return 'Гость';
+    }
+  }
+
+  // Если "Гость" уже занят или есть другие гости — подбираем свободный драгоценный камень
+  const availableGems = GEMSTONES.filter(g => !usedNames.has(`Гость-${g}`));
+  if (availableGems.length > 0) {
+    const randomGem = availableGems[Math.floor(Math.random() * availableGems.length)];
+    return `Гость-${randomGem}`;
+  } else {
+    return `Гость-${Math.floor(100 + Math.random() * 900)}`;
+  }
+}
+
 // Socket.io логика
 io.on('connection', (socket) => {
   logEvent('info', null, `User connected: ${socket.id}`);
 
   socket.on('createRoom', (data, callback) => {
     const roomId = Math.floor(1000 + Math.random() * 9000).toString();
+    const hostUsername = data && data.username ? data.username : null;
     rooms.set(roomId, {
       id: roomId,
       host: socket.id,
+      hostUsername: hostUsername,
       players: [],
       score: { experts: 0, viewers: 0 },
       state: 'waiting', // waiting, playing, finished
@@ -191,7 +235,7 @@ io.on('connection', (socket) => {
     callback({ roomId });
   });
 
-  socket.on('joinRoom', async ({ roomId, username, isHost }, callback) => {
+  socket.on('joinRoom', async ({ roomId, username, isHost, isGuest }, callback) => {
     const room = rooms.get(roomId);
     if (room) {
       if (!isHost && room.hostUsername === username) {
@@ -199,17 +243,35 @@ io.on('connection', (socket) => {
       }
       
       if (!isHost) {
-        // Загружаем аватар и шапку из БД
+        // Проверяем, нет ли уже такого игрока (реконнект)
+        const existingPlayer = room.players.find(p => p.username === username);
+        if (existingPlayer) {
+          existingPlayer.id = socket.id;
+          socket.join(roomId);
+          io.to(roomId).emit('roomUpdated', room);
+          callback({ success: true, room, assignedUsername: username });
+          return;
+        }
+
+        // Если это новый игрок и он гость, определяем имя (с камнем при пересечении)
+        const isGuestPlayer = isGuest || username === 'Гость' || username.startsWith('Гость-') || username.startsWith('Гость ');
+        if (isGuestPlayer) {
+          username = resolveGuestName(room, username);
+        }
+
+        // Загружаем аватар и шапку из БД (для гостей ставим дефолтные)
         let active_avatar = 'avatar_boss.jpg';
         let active_hat = null;
-        try {
-          const user = await db.getUserByUsername(username);
-          if (user) {
-            active_avatar = user.active_avatar || 'avatar_boss.jpg';
-            active_hat = user.active_hat;
+        if (!isGuestPlayer) {
+          try {
+            const user = await db.getUserByUsername(username);
+            if (user) {
+              active_avatar = user.active_avatar || 'avatar_boss.jpg';
+              active_hat = user.active_hat;
+            }
+          } catch (e) {
+            console.error(e);
           }
-        } catch (e) {
-          console.error(e);
         }
 
         if (room.hostUsername === username) {
@@ -222,44 +284,33 @@ io.on('connection', (socket) => {
            return;
         }
 
-        // Проверяем, нет ли уже такого игрока (реконнект)
-        const existingPlayer = room.players.find(p => p.username === username);
-        if (existingPlayer) {
-          existingPlayer.id = socket.id;
-          existingPlayer.active_avatar = active_avatar;
-          existingPlayer.active_hat = active_hat;
+        if (room.state !== 'waiting') {
+          if (!room.joinRequests) room.joinRequests = [];
+          const req = room.joinRequests.find(r => r.username === username);
+          if (req) {
+             req.id = socket.id;
+          } else {
+             room.joinRequests.push({ id: socket.id, username, active_avatar, active_hat, isGuest: isGuestPlayer });
+             // Notify the host (and optionally everyone) about the new knock
+             const isTimerActive = room.timerEndsAt && room.timerEndsAt > Date.now();
+             io.to(room.host).emit('joinRequestNotification', { isTimerActive, username });
+             if (isTimerActive) {
+                 io.to(room.host).emit('playAudioGlobal', 'znatok-wants-to-join');
+             } else {
+                 io.to(roomId).emit('playAudioGlobal', 'znatok-wants-to-join');
+             }
+          }
           socket.join(roomId);
           io.to(roomId).emit('roomUpdated', room);
-          callback({ success: true, room });
+          callback({ success: true, status: 'pending', room, assignedUsername: username });
         } else {
-          if (room.state !== 'waiting') {
-            if (!room.joinRequests) room.joinRequests = [];
-            const req = room.joinRequests.find(r => r.username === username);
-            if (req) {
-               req.id = socket.id;
-            } else {
-               room.joinRequests.push({ id: socket.id, username, active_avatar, active_hat });
-               // Notify the host (and optionally everyone) about the new knock
-               const isTimerActive = room.timerEndsAt && room.timerEndsAt > Date.now();
-               io.to(room.host).emit('joinRequestNotification', { isTimerActive, username });
-               if (isTimerActive) {
-                   io.to(room.host).emit('playAudioGlobal', 'znatok-wants-to-join');
-               } else {
-                   io.to(roomId).emit('playAudioGlobal', 'znatok-wants-to-join');
-               }
-            }
-            socket.join(roomId);
-            io.to(roomId).emit('roomUpdated', room);
-            callback({ success: true, status: 'pending', room });
-          } else {
-            room.players.push({ id: socket.id, username, ready: false, active_avatar, active_hat });
-            socket.join(roomId);
-            io.to(roomId).emit('roomUpdated', room);
-            callback({ success: true, room });
-          }
+          room.players.push({ id: socket.id, username, ready: false, active_avatar, active_hat, isGuest: isGuestPlayer });
+          socket.join(roomId);
+          io.to(roomId).emit('roomUpdated', room);
+          callback({ success: true, room, assignedUsername: username });
         }
       } else {
-        if (room.hostUsername && room.hostUsername !== username && room.host) {
+        if (room.hostUsername && room.hostUsername !== username && room.host && room.host !== socket.id) {
            callback({ success: false, error: 'Место распорядителя (Крупье) за этим столом уже занято!' });
            return;
         }
@@ -267,7 +318,7 @@ io.on('connection', (socket) => {
         room.hostUsername = username;
         socket.join(roomId);
         io.to(roomId).emit('roomUpdated', room);
-        callback({ success: true, room, isHost: true });
+        callback({ success: true, room, isHost: true, assignedUsername: username });
       }
     } else {
       callback({ success: false, error: 'Игровой стол с таким шифром не найден в залах Клуба.' });
@@ -530,9 +581,12 @@ io.on('connection', (socket) => {
         room.state = 'finished';
         io.to(roomId).emit('roomUpdated', room);
 
-        // Обновляем статистику в БД для всех игроков
+        // Обновляем статистику в БД для всех игроков (кроме гостей)
         const expertsWon = room.score.experts === 6;
         for (const p of room.players) {
+           if (p.isGuest || p.username === 'Гость' || p.username.startsWith('Гость-')) {
+             continue;
+           }
            try {
              const user = await db.getUserByUsername(p.username);
              if (user) {
@@ -662,7 +716,7 @@ io.on('connection', (socket) => {
         const req = room.joinRequests.splice(reqIndex, 1)[0];
         if (action === 'accept') {
           if (room.players.length < 5) {
-            room.players.push({ id: req.id, username: req.username, ready: true, active_avatar: req.active_avatar, active_hat: req.active_hat });
+            room.players.push({ id: req.id, username: req.username, ready: true, active_avatar: req.active_avatar, active_hat: req.active_hat, isGuest: req.isGuest });
             io.to(req.id).emit('joinRequestApproved', room);
           }
         } else if (action === 'reject') {

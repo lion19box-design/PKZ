@@ -328,11 +328,101 @@
   font-family: var(--font-serif);
 }
 
+.guest-badge {
+  color: #a0a0a0;
+  font-size: 0.9em;
+  font-style: italic;
+  font-weight: normal;
+}
+
 .play-btn {
   font-size: 1.5rem;
   padding: 15px 40px;
   margin-bottom: 20px;
   width: 100%;
+}
+
+.guest-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 0.4rem 0;
+  color: var(--text-muted);
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+}
+
+.guest-divider::before,
+.guest-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.guest-divider span {
+  padding: 0 10px;
+  text-transform: lowercase;
+  letter-spacing: 1px;
+}
+
+.guest-login-btn {
+  background: rgba(20, 20, 20, 0.6);
+  color: var(--accent-gold);
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  padding: 10px;
+  font-size: 1.05rem;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: var(--transition-smooth);
+}
+
+.guest-login-btn:hover {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.4);
+  transform: translateY(-1px);
+}
+
+.guest-to-account-btn {
+  background: rgba(30, 25, 15, 0.7);
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  transition: var(--transition-smooth);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+}
+
+.guest-to-account-btn:hover {
+  background: rgba(212, 175, 55, 0.2);
+  box-shadow: 0 0 18px rgba(212, 175, 55, 0.5);
+  transform: translateY(-2px);
+  color: #fff;
+}
+
+.guest-to-account-btn small {
+  color: #ccc;
+  font-size: 0.85rem;
+  margin-left: 4px;
+}
+
+.guest-btn-icon {
+  width: 18px;
+  height: 18px;
+  filter: drop-shadow(0 0 4px var(--accent-gold));
 }
 
 .logout-btn {
@@ -412,6 +502,22 @@
     padding: 8px;
     font-size: 0.95rem;
     margin-top: 4px;
+  }
+
+  .guest-divider {
+    margin: 0.1rem 0;
+    font-size: 0.75rem;
+  }
+
+  .guest-login-btn {
+    padding: 5px;
+    font-size: 0.85rem;
+  }
+
+  .guest-to-account-btn {
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
   }
 
   .menu-footer {

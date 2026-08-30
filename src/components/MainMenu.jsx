@@ -5,17 +5,20 @@ import { useEliteNotification } from './EliteNotification';
 import './MainMenu.css';
 
 export default function MainMenu() {
-  const { showAlert } = useEliteNotification();
+  const { showAlert, showConfirm } = useEliteNotification();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
     const storedUsername = localStorage.getItem('chgk_username');
+    const storedIsGuest = localStorage.getItem('chgk_is_guest') === 'true';
     if (storedUsername) {
       setUsername(storedUsername);
       setIsLoggedIn(true);
+      setIsGuest(storedIsGuest);
     }
   }, []);
   
@@ -144,6 +147,8 @@ export default function MainMenu() {
       }
       
       localStorage.setItem('chgk_username', username);
+      localStorage.removeItem('chgk_is_guest');
+      setIsGuest(false);
       return true;
     } catch (err) {
       console.error(err);
@@ -159,14 +164,39 @@ export default function MainMenu() {
     }
   };
 
-  const handleProfileClick = async () => {
-    if (!username || !password) {
-      showAlert('Позвольте! Чтобы войти в личную гардеробную, необходимо представиться и назвать пароль.', 'Канцелярия Клуба');
+  const handleGuestLogin = () => {
+    showConfirm(
+      'Желаете переступить порог Элитарного Клуба на правах вольного Гостя? Вы сможете беспрепятственно принять участие в интеллектуальной баталии, однако ваши триумфы не будут внесены в официальный реестр Клуба, а доступ в личную гардеробную и зал славы останется заперт.',
+      () => {
+        const guestName = 'Гость';
+        localStorage.setItem('chgk_username', guestName);
+        localStorage.setItem('chgk_is_guest', 'true');
+        setUsername(guestName);
+        setIsGuest(true);
+        setIsLoggedIn(true);
+      },
+      null,
+      'Гостевой визит',
+      'Войти как Гость',
+      'Остаться у дверей'
+    );
+  };
+
+  const handleSwitchToAccount = () => {
+    localStorage.removeItem('chgk_username');
+    localStorage.removeItem('chgk_is_guest');
+    setIsGuest(false);
+    setIsLoggedIn(false);
+    setUsername('');
+    setPassword('');
+  };
+
+  const handleProfileClick = () => {
+    if (isGuest) {
+      showAlert('Личная гардеробная и коллекция сов открывают свои двери только действительным членам Клуба с именной карточкой. Извольте войти в аккаунт или зарегистрироваться!', 'Канцелярия Клуба');
       return;
     }
-    if (await performAuth()) {
-      navigate('/profile');
-    }
+    navigate('/profile');
   };
 
   const handleDifficultyChange = (e) => {
@@ -203,13 +233,28 @@ export default function MainMenu() {
 
         {isLoggedIn ? (
           <div className="logged-in-menu">
-            <h3 className="welcome-greeting">Добро пожаловать, {username}</h3>
+            <h3 className="welcome-greeting">
+              Добро пожаловать, <span className="highlight-gold">{username}</span>
+              {isGuest && <span className="guest-badge"> (Гость)</span>}
+            </h3>
             <button 
               className="premium-btn play-btn"
               onClick={() => navigate('/lobby')}
             >
               ИГРАТЬ
             </button>
+
+            {isGuest && (
+              <button 
+                type="button" 
+                className="guest-to-account-btn"
+                onClick={handleSwitchToAccount}
+                title="Авторизоваться или создать полноценный аккаунт знатока"
+              >
+                <img src="/assets/icons/pen.svg" alt="выйти из тени" className="guest-btn-icon" />
+                <span>Войти в аккаунт <small>(Выйти из тени)</small></span>
+              </button>
+            )}
           </div>
         ) : (
           <form onSubmit={handleLogin} className="login-form">
@@ -248,10 +293,22 @@ export default function MainMenu() {
             <button 
                type="button" 
                className="icon-btn" 
-               style={{marginTop: '10px', fontSize: '0.9rem'}}
+               style={{marginTop: '6px', fontSize: '0.9rem'}}
                onClick={() => setIsRegistering(!isRegistering)}
             >
                {isRegistering ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Создать'}
+            </button>
+
+            <div className="guest-divider">
+              <span>или</span>
+            </div>
+
+            <button 
+              type="button" 
+              className="guest-login-btn"
+              onClick={handleGuestLogin}
+            >
+              Войти как гость
             </button>
           </form>
         )}
@@ -267,7 +324,7 @@ export default function MainMenu() {
             <button onClick={() => setActiveModal('authors')} className="icon-btn">
               <img src="/assets/icons/pen.svg" alt="authors" className="menu-icon" /> Авторы
             </button>
-            <button onClick={() => navigate('/profile')} className="icon-btn" style={{color: '#fff', textShadow: '0 0 5px var(--accent-gold)'}}>
+            <button onClick={handleProfileClick} className="icon-btn" style={{color: '#fff', textShadow: '0 0 5px var(--accent-gold)'}}>
               <img src="/assets/icons/top-hat.svg" alt="profile" className="menu-icon" /> Профиль
             </button>
             <button onClick={() => setActiveModal('donate')} className="icon-btn donate-btn">
@@ -477,13 +534,8 @@ export default function MainMenu() {
       {isLoggedIn && (
         <button 
           className="circle-icon-btn main-menu-exit-btn"
-          onClick={() => {
-            localStorage.removeItem('chgk_username');
-            setIsLoggedIn(false);
-            setUsername('');
-            setPassword('');
-          }}
-          title="Выйти из аккаунта"
+          onClick={handleSwitchToAccount}
+          title={isGuest ? "Покинуть клуб" : "Выйти из аккаунта"}
         >
           <img src="/assets/door-exit.svg" alt="Выйти" />
         </button>
