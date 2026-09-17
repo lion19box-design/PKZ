@@ -13,9 +13,13 @@
   --border-radius: 8px;
   --transition-smooth: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 
-  /* Шрифты */
-  --font-serif: 'Playfair Display', serif; /* Для заголовков и вопросов */
-  --font-mono: 'Roboto Mono', monospace;   /* Для таймеров и логов */
+  /* Шрифты (Элитарный Клуб) */
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif; /* Для заголовков, счета и титулов */
+  --font-serif: var(--font-display);                                     /* Обратная совместимость */
+  --font-question: 'PT Serif', Georgia, 'Times New Roman', serif;       /* Для комфортного чтения вопросов и подсказок */
+  --font-ui: 'Golos Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; /* Для кнопок, инпутов, секторов рулетки */
+  --font-sans: var(--font-ui);                                          /* Закрывает баг отсутствующей переменной */
+  --font-mono: 'IBM Plex Mono', 'Roboto Mono', monospace;               /* Для таймеров, кодов и логов */
 }
 
 * {
@@ -28,7 +32,12 @@
 body {
   background-color: var(--bg-color);
   color: var(--text-main);
-  font-family: var(--font-serif);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   overflow: hidden;
   display: flex;
   justify-content: center;
@@ -153,4 +162,18 @@ body {
   0% { transform: scale(1) rotate(0deg); opacity: 0.8; }
   50% { transform: scale(1.1) rotate(180deg); opacity: 1; }
   100% { transform: scale(1) rotate(360deg); opacity: 0.8; }
+}
+
+/* --- ТИПОГРАФИКА: Книжный блок вопросов и заголовки --- */
+.question-prose {
+  font-family: var(--font-question);
+  font-size: 1.15rem;
+  line-height: 1.6;
+  max-width: 65ch;
+  color: var(--text-main);
+}
+
+.heading-display {
+  font-family: var(--font-display);
+  text-wrap: balance;
 }

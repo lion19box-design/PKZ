@@ -31,19 +31,20 @@
 
 .elite-modal-title {
   color: var(--accent-gold);
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.8rem;
   margin-top: 0;
   margin-bottom: 15px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  text-wrap: balance;
 }
 
 .elite-modal-message {
   color: #e0e0e0;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   line-height: 1.5;
   margin-bottom: 25px;
-  font-family: 'Roboto', sans-serif;
+  font-family: var(--font-ui);
   word-wrap: break-word;
 }
 
@@ -57,6 +58,8 @@
   padding: 10px 20px;
   font-size: 1rem;
   min-width: 120px;
+  font-family: var(--font-ui);
+  font-weight: 600;
 }
 
 .elite-modal-btn.cancel {
@@ -87,8 +90,8 @@
   }
 
   .elite-modal-message {
-    font-size: 0.9rem;
-    line-height: 1.4;
+    font-size: 0.95rem;
+    line-height: 1.45;
     margin-bottom: 14px;
   }
 
@@ -98,7 +101,7 @@
 
   .elite-modal-btn {
     padding: 6px 14px;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     min-width: 90px;
   }
 }

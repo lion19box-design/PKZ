@@ -86,11 +86,12 @@ export default function Roulette({ targetSector, playedSectors = [], onSectorSel
           />
           <span style={{ 
             position: 'relative', zIndex: 3, 
-            fontSize: isBlackBoxSector ? '1.4rem' : '1.5rem', 
-            fontFamily: 'Arial, sans-serif',
+            fontSize: isBlackBoxSector ? '1.35rem' : '1.5rem', 
+            fontFamily: 'var(--font-ui)',
             color: isPlayed ? 'rgba(0,0,0,0.5)' : (isBlackBoxSector ? '#ffffff' : '#111'),
             textShadow: isBlackBoxSector ? '1px 1px 3px rgba(0,0,0,0.8)' : '0px 0px 1px rgba(0,0,0,0.3)',
-            fontWeight: '900',
+            fontWeight: '800',
+            letterSpacing: isBlackBoxSector ? '0.5px' : 'normal',
             display: 'inline-block'
           }}>{isBlackBoxSector ? 'ЧЯ' : i}</span>
         </div>

@@ -300,7 +300,7 @@ export default function HostView() {
           {room.timerPenalty && <span style={{ color: '#f44336', fontWeight: 'bold', fontSize: '0.8rem' }}>⚠️ -20с</span>}
           {room.timerSpent && !room.timerEndsAt && <span style={{ color: '#ff9800', fontWeight: 'bold', background: 'rgba(0,0,0,0.5)', padding: '3px 6px', borderRadius: '4px', fontSize: '0.75rem' }}>⚠️ БАЗОВАЯ МИНУТА</span>}
           {timeLeft !== null && (
-            <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: timeLeft <= 10 ? '#f44336' : '#4caf50', minWidth: '60px', textAlign: 'center', fontFamily: 'monospace' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: timeLeft <= 10 ? '#f44336' : '#4caf50', minWidth: '60px', textAlign: 'center', fontFamily: 'var(--font-mono)' }}>
               {formatTime(timeLeft)}
             </div>
           )}
@@ -411,17 +411,25 @@ export default function HostView() {
                 )}
               </div>
             </div>
-            <p style={{ color: '#ccc', fontStyle: 'italic', marginBottom: '10px' }}>
+            <p style={{ 
+              color: '#f0e6d2', 
+              fontStyle: 'normal', 
+              marginBottom: '10px',
+              fontFamily: 'var(--font-question)',
+              fontSize: '1.05rem',
+              lineHeight: '1.6',
+              maxWidth: '65ch'
+            }}>
               {room.currentQuestion ? room.currentQuestion.questionText : "Вопрос не выбран. Крутите рулетку."}
             </p>
             <h3 style={{ borderBottom: 'none', marginBottom: '4px', color: '#ff9800' }}>Правильный ответ</h3>
-            <p style={{ color: '#fff', fontWeight: 'bold', marginBottom: '10px' }}>
+            <p style={{ color: '#fff', fontWeight: 'bold', marginBottom: '10px', fontFamily: 'var(--font-question)', fontSize: '1.05rem', lineHeight: '1.5', maxWidth: '65ch' }}>
               {room.currentQuestion ? room.currentQuestion.answerText : ""}
             </p>
             {room.currentQuestion && room.currentQuestion.clubHint && (
                <>
                  <h3 style={{ borderBottom: 'none', marginBottom: '4px', color: '#2196f3' }}>Подсказка клуба</h3>
-                 <p style={{ color: '#fff', fontWeight: 'normal', fontStyle: 'italic' }}>
+                 <p style={{ color: '#ccc', fontWeight: 'normal', fontStyle: 'italic', fontFamily: 'var(--font-question)', fontSize: '1rem', lineHeight: '1.55', maxWidth: '65ch' }}>
                    {room.currentQuestion.clubHint}
                  </p>
                </>
@@ -740,21 +748,22 @@ export default function HostView() {
             }}>
               <p style={{
                 fontSize: '1.25rem',
-                lineHeight: '1.55',
-                color: '#fff',
-                fontFamily: 'var(--font-serif)',
-                margin: 0
+                lineHeight: '1.6',
+                color: '#f0e6d2',
+                fontFamily: 'var(--font-question)',
+                maxWidth: '65ch',
+                margin: '0 auto'
               }}>
                 {room.currentQuestion.questionText}
               </p>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
-              <div style={{ color: '#ff9800', fontWeight: 'bold', fontSize: '1.05rem' }}>
+              <div style={{ color: '#ff9800', fontWeight: 'bold', fontSize: '1.05rem', fontFamily: 'var(--font-question)' }}>
                 Правильный ответ: <span style={{ color: '#fff', fontWeight: 'bold' }}>{room.currentQuestion.answerText}</span>
               </div>
               {room.currentQuestion.clubHint && (
-                <div style={{ color: '#2196f3', fontWeight: 'bold', fontSize: '0.95rem' }}>
+                <div style={{ color: '#2196f3', fontWeight: 'bold', fontSize: '0.95rem', fontFamily: 'var(--font-question)' }}>
                   Подсказка клуба: <span style={{ color: '#ccc', fontWeight: 'normal', fontStyle: 'italic' }}>{room.currentQuestion.clubHint}</span>
                 </div>
               )}

@@ -737,7 +737,7 @@
   }
 
   .score-label {
-    font-size: 0.60rem !important;
+    font-size: 0.72rem !important;
     letter-spacing: 0.5px !important;
     text-align: center !important;
     width: 100% !important;
@@ -781,7 +781,7 @@
 
   .control-btn {
     padding: 3px 6px !important;
-    font-size: 0.68rem !important;
+    font-size: 0.75rem !important;
   }
 
   .host-header-actions {
@@ -793,7 +793,7 @@
 
   .host-header-actions .control-btn {
     padding: 3px 5px !important;
-    font-size: 0.62rem !important;
+    font-size: 0.72rem !important;
   }
 
   .host-header-controls {
@@ -805,7 +805,7 @@
 
   .host-header-controls .control-btn {
     padding: 3px 5px !important;
-    font-size: 0.62rem !important;
+    font-size: 0.72rem !important;
   }
 
   .host-bb-controls {
@@ -818,7 +818,7 @@
 
   .host-bb-controls .control-btn {
     padding: 2px 4px !important;
-    font-size: 0.58rem !important;
+    font-size: 0.70rem !important;
   }
 
   .expert-left-panel {
@@ -1032,7 +1032,7 @@
   }
 
   .score-label {
-    font-size: 0.58rem !important;
+    font-size: 0.70rem !important;
     letter-spacing: 0.3px !important;
   }
 
@@ -1044,7 +1044,7 @@
   .score-controls button {
     width: 16px !important;
     height: 16px !important;
-    font-size: 0.72rem !important;
+    font-size: 0.75rem !important;
   }
 
   .roulette-table {
@@ -1065,18 +1065,18 @@
   }
 
   .side-panel h3 {
-    font-size: 0.72rem !important;
+    font-size: 0.80rem !important;
     margin-bottom: 2px !important;
   }
 
   .side-panel p {
-    font-size: 0.65rem !important;
-    line-height: 1.15 !important;
+    font-size: 0.75rem !important;
+    line-height: 1.25 !important;
     margin-bottom: 3px !important;
   }
 
   .side-panel .control-btn {
-    font-size: 0.65rem !important;
+    font-size: 0.75rem !important;
     padding: 2px 4px !important;
   }
 
@@ -1095,14 +1095,14 @@
   }
 
   .host-viewer-card h4 {
-    font-size: 0.76rem !important;
-    line-height: 1.1 !important;
+    font-size: 0.80rem !important;
+    line-height: 1.15 !important;
     margin: 0 !important;
   }
 
   .host-viewer-card p {
-    font-size: 0.62rem !important;
-    line-height: 1.1 !important;
+    font-size: 0.72rem !important;
+    line-height: 1.2 !important;
     margin: 2px 0 0 0 !important;
   }
 
@@ -1126,13 +1126,13 @@
   }
 
   .expert-viewer-card h4 {
-    font-size: 0.76rem !important;
-    line-height: 1.1 !important;
+    font-size: 0.80rem !important;
+    line-height: 1.15 !important;
   }
 
   .expert-viewer-card p {
-    font-size: 0.62rem !important;
-    line-height: 1.1 !important;
+    font-size: 0.72rem !important;
+    line-height: 1.2 !important;
   }
 
   .expert-hints-box {
@@ -1141,7 +1141,7 @@
   }
 
   .expert-hints-box h3 {
-    font-size: 0.65rem !important;
+    font-size: 0.75rem !important;
     margin-bottom: 2px !important;
   }
 

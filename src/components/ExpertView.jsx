@@ -215,7 +215,7 @@ export default function ExpertView() {
           boxShadow: '0 4px 15px rgba(0,0,0,0.5)', textAlign: 'center'
         }}>
           <h2 style={{ margin: '0 0 10px 0' }}>Крупье активировал "Помощь Клуба"!</h2>
-          <p style={{ margin: 0, fontSize: '1.2rem', fontStyle: 'italic' }}>
+          <p style={{ margin: 0, fontSize: '1.2rem', fontStyle: 'italic', fontFamily: 'var(--font-question)', maxWidth: '65ch', lineHeight: '1.55' }}>
             {room.currentQuestion?.clubHint || "Клуб не смог найти подсказку..."}
           </p>
           <button 
