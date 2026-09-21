@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SERVER_URL } from '../socket';
 import { useEliteNotification } from './EliteNotification';
+import DispatchModal from './DispatchModal';
+import ChancelleryModal from './ChancelleryModal';
 import './MainMenu.css';
 
 export default function MainMenu() {
@@ -11,6 +13,11 @@ export default function MainMenu() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
+
+  const isLocalhost = typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' || 
+    window.location.hostname === '127.0.0.1'
+  );
 
   useEffect(() => {
     const storedUsername = localStorage.getItem('chgk_username');
@@ -310,6 +317,25 @@ export default function MainMenu() {
             >
               Войти как гость
             </button>
+
+            <div style={{ marginTop: '12px', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
+              <button 
+                type="button" 
+                onClick={() => setActiveModal('dispatch')} 
+                style={{ background: 'none', border: 'none', color: '#9e9e9e', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                Депеша в Секретариат
+              </button>
+              {isLocalhost && (
+                <button 
+                  type="button" 
+                  onClick={() => setActiveModal('chancellery')} 
+                  style={{ background: 'none', border: 'none', color: 'var(--accent-gold)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Канцелярия Клуба
+                </button>
+              )}
+            </div>
           </form>
         )}
 
@@ -330,12 +356,25 @@ export default function MainMenu() {
             <button onClick={() => setActiveModal('donate')} className="icon-btn donate-btn">
               <img src="/assets/icons/money-bag.svg" alt="donate" className="menu-icon" /> Донат
             </button>
+            <button onClick={() => setActiveModal('dispatch')} className="icon-btn" title="Секретариат Клуба (Обратная связь)">
+              <img src="/assets/skarabey.png" alt="Секретариат" className="menu-icon" style={{ objectFit: 'contain' }} /> Секретариат
+            </button>
+            {isLocalhost && (
+              <button 
+                onClick={() => setActiveModal('chancellery')} 
+                className="icon-btn" 
+                style={{ border: '1px solid rgba(212, 175, 55, 0.6)', color: 'var(--accent-gold)' }}
+                title="Служебный реестр депеш (только для создателя)"
+              >
+                <img src="/assets/icons/pen.svg" alt="Канцелярия" className="menu-icon" /> Канцелярия
+              </button>
+            )}
           </div>
         )}
       </div>
 
       {/* MODALS */}
-      {activeModal && (
+      {activeModal && activeModal !== 'dispatch' && activeModal !== 'chancellery' && (
         <div className="modal-overlay" onClick={closeModal} style={{zIndex: 10}}>
           <div 
             className={`modal-content ${activeModal === 'donate' ? 'donate-modal' : ''}`} 
@@ -346,13 +385,16 @@ export default function MainMenu() {
             {activeModal === 'customization' && (
               <div style={{ textAlign: 'center', padding: '40px 20px' }}>
                 <h2 style={{color: 'var(--accent-gold)', marginBottom: '20px'}}>Кастомизация профиля</h2>
-                <div style={{fontSize: '4rem', marginBottom: '20px'}}>🎩</div>
+                <div style={{marginBottom: '20px'}}>
+                  <img src="/assets/icons/top-hat.svg" alt="Цилиндр" style={{ width: '56px', height: '56px' }} />
+                </div>
                 <p style={{fontSize: '1.2rem', color: '#ccc'}}>
                   Скоро здесь будет доступен выбор элитарных аватаров и коллекционных шапок. 
                   Настоящие знатоки готовят свой гардероб заранее!
                 </p>
               </div>
             )}
+
 
             {activeModal === 'rules' && (
               <div style={{ paddingBottom: '20px' }}>
@@ -540,6 +582,19 @@ export default function MainMenu() {
           <img src="/assets/door-exit.svg" alt="Выйти" />
         </button>
       )}
+
+      <DispatchModal 
+        isOpen={activeModal === 'dispatch'} 
+        onClose={closeModal} 
+        category="general"
+        title="Депеша в Секретариат Клуба"
+      />
+
+      <ChancelleryModal 
+        isOpen={activeModal === 'chancellery'} 
+        onClose={closeModal} 
+      />
     </div>
   );
 }
+

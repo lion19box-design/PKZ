@@ -1176,3 +1176,15 @@
     padding: 2px 5px !important;
   }
 }
+
+.scarab-btn {
+  border: 1px solid rgba(212, 175, 55, 0.6) !important;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.25) 0%, rgba(13, 20, 16, 0.85) 80%) !important;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.25) !important;
+}
+
+.scarab-btn:hover {
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.5) !important;
+  border-color: var(--accent-gold) !important;
+}
+

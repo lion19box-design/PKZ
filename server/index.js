@@ -49,6 +49,76 @@ app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
+// Проверка, что запрос пришел локально от создателя
+function isLocalhostRequest(req) {
+  const ip = req.ip || req.socket?.remoteAddress || req.connection?.remoteAddress || '';
+  return ip === '127.0.0.1' || ip === '::1' || ip.includes('127.0.0.1') || ip === '::ffff:127.0.0.1';
+}
+
+// Прием депеш и апелляций (публичный эндпоинт, только запись)
+app.post('/api/dispatches', async (req, res) => {
+  try {
+    const { username, contact, category, message, gameContext } = req.body;
+    if (!message || typeof message !== 'string' || !message.trim()) {
+      return res.status(400).json({ error: 'Господа, депеша не может быть пустой. Извольте изложить суть казуса.' });
+    }
+
+    const cleanMessage = message.trim().slice(0, 3000);
+    const cleanUsername = (username || 'Анонимный Знаток').toString().slice(0, 50);
+    const cleanContact = (contact || '').toString().slice(0, 100);
+    const cleanCategory = (category || 'appeal').toString().slice(0, 30);
+
+    await db.createDispatch({
+      username: cleanUsername,
+      contact: cleanContact,
+      category: cleanCategory,
+      message: cleanMessage,
+      gameContext
+    });
+
+    res.status(201).json({ success: true, message: 'Депеша успешно передана в Секретариат Клуба.' });
+  } catch (err) {
+    console.error('[API] Error saving dispatch:', err);
+    res.status(500).json({ error: 'Секретариат временно перегружен. Повторите попытку чуть позже.' });
+  }
+});
+
+// Реестр депеш для Канцелярии Клуба (только локальный доступ создателя)
+app.get('/api/dispatches', async (req, res) => {
+  if (!isLocalhostRequest(req)) {
+    return res.status(404).send('Not Found');
+  }
+
+  try {
+    const dispatches = await db.getDispatches();
+    res.json({ dispatches });
+  } catch (err) {
+    console.error('[API] Error loading dispatches:', err);
+    res.status(500).json({ error: 'Не удалось прочесть реестр депеш.' });
+  }
+});
+
+// Обновление статуса депеши (только локальный доступ создателя)
+app.patch('/api/dispatches/:id', async (req, res) => {
+  if (!isLocalhostRequest(req)) {
+    return res.status(404).send('Not Found');
+  }
+
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { status } = req.body;
+    if (!id || !['new', 'reviewed', 'archived'].includes(status)) {
+      return res.status(400).json({ error: 'Некорректный статус депеши.' });
+    }
+
+    await db.updateDispatchStatus(id, status);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[API] Error updating dispatch status:', err);
+    res.status(500).json({ error: 'Ошибка обновления статуса депеши.' });
+  }
+});
+
 app.post('/api/auth/register', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Господа, внесение в официальный реестр Клуба требует строгой точности. Извольте указать и имя, и пароль!' });

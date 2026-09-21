@@ -5,6 +5,7 @@ import Roulette from './Roulette';
 import GameLobby from './GameLobby';
 import VolumeControl from './VolumeControl';
 import { useEliteNotification } from './EliteNotification';
+import DispatchModal from './DispatchModal';
 import './GameStyles.css';
 
 export default function HostView() {
@@ -25,6 +26,7 @@ export default function HostView() {
   const [timeLeft, setTimeLeft] = useState(null);
   const [bbControlsOpen, setBbControlsOpen] = useState(false);
   const [zoomQuestionModalOpen, setZoomQuestionModalOpen] = useState(false);
+  const [dispatchOpen, setDispatchOpen] = useState(false);
 
   const pendingRequests = room?.joinRequests || [];
   const hasPending = pendingRequests.length > 0;
@@ -616,6 +618,16 @@ export default function HostView() {
           <img src="/assets/book-with-rules.svg" alt="Rulebook" style={{ width: '24px', height: '24px' }} />
         </button>
 
+        <button 
+          onClick={() => setDispatchOpen(true)}
+          className="circle-icon-btn scarab-btn"
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          title="Апелляция к Распорядителю (Сообщить о неполадке)"
+        >
+          <img src="/assets/skarabey.png" alt="Скарабей" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+        </button>
+
         <VolumeControl align="right" style={{ position: 'relative', bottom: 'auto', left: 'auto', right: 'auto', zIndex: 100 }} />
 
         <button 
@@ -782,6 +794,21 @@ export default function HostView() {
         </div>
       )}
 
+      <DispatchModal
+        isOpen={dispatchOpen}
+        onClose={() => setDispatchOpen(false)}
+        category="appeal"
+        gameContext={{
+          roomId,
+          role: 'host',
+          round: room?.roundNumber || 1,
+          score: `${room?.score?.experts || 0} : ${room?.score?.viewers || 0}`,
+          gameState: room?.gameState || 'playing',
+          currentQuestion: room?.currentQuestion?.id || null,
+          blackBoxState: room?.blackBoxState || 'hidden'
+        }}
+      />
     </div>
   );
 }
+

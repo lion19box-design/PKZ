@@ -69,6 +69,19 @@ export async function initDb() {
       )
     `);
 
+    await execute(`
+      CREATE TABLE IF NOT EXISTS dispatches (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        created_at TEXT NOT NULL,
+        username TEXT,
+        contact TEXT,
+        category TEXT DEFAULT 'appeal',
+        message TEXT NOT NULL,
+        game_context TEXT,
+        status TEXT DEFAULT 'new'
+      )
+    `);
+
     // Миграции для старых колонок
     const addColumn = async (colDef) => {
       try {
@@ -121,6 +134,24 @@ export async function updateUserStats(username, gamesPlayed, wins, losses, pendi
   );
 }
 
+export async function createDispatch({ username = 'Анонимный Знаток', contact = '', category = 'appeal', message, gameContext = null }) {
+  const createdAt = new Date().toISOString();
+  const contextStr = typeof gameContext === 'object' && gameContext !== null ? JSON.stringify(gameContext) : (gameContext || null);
+  return await execute(
+    'INSERT INTO dispatches (created_at, username, contact, category, message, game_context, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [createdAt, username, contact, category, message, contextStr, 'new']
+  );
+}
+
+export async function getDispatches() {
+  const result = await execute('SELECT * FROM dispatches ORDER BY id DESC');
+  return result.rows || [];
+}
+
+export async function updateDispatchStatus(id, status) {
+  return await execute('UPDATE dispatches SET status = ? WHERE id = ?', [status, id]);
+}
+
 export default {
   execute,
   initDb,
@@ -129,4 +160,8 @@ export default {
   updateUserEquipment,
   updateUserAwards,
   updateUserStats,
+  createDispatch,
+  getDispatches,
+  updateDispatchStatus,
 };
+
