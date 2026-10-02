@@ -60,56 +60,6 @@ body {
   overflow: hidden;
 }
 
-/* Portrait orientation overlay */
-.rotate-device-prompt {
-  display: none;
-}
-
-@media screen and (orientation: portrait) {
-  .rotate-device-prompt {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    height: 100dvh;
-    background: radial-gradient(circle at center, #1a1a24 0%, #0b0c10 100%);
-    color: var(--accent-gold);
-    z-index: 999999;
-    padding: 30px;
-    text-align: center;
-    font-family: var(--font-serif);
-  }
-
-  .rotate-device-icon {
-    font-size: 3.5rem;
-    margin-bottom: 20px;
-    animation: rotatePhone 2.2s infinite ease-in-out;
-  }
-
-  .rotate-device-title {
-    font-size: 1.6rem;
-    margin-bottom: 12px;
-    color: var(--accent-gold);
-    text-shadow: 0 0 10px var(--accent-gold-glow);
-  }
-
-  .rotate-device-desc {
-    font-size: 1rem;
-    color: var(--text-muted);
-    line-height: 1.5;
-    max-width: 320px;
-  }
-}
-
-@keyframes rotatePhone {
-  0%, 20% { transform: rotate(0deg); }
-  60%, 100% { transform: rotate(-90deg); }
-}
 
 /* --- ЭЛТ ФИЛЬТР (CRT Effect) --- */
 .crt-overlay {

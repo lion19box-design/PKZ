@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /lobby
+Disallow: /host/
+Disallow: /expert/
+Disallow: /profile
+
+Sitemap: https://www.pochemu-kuda-zachem.club/sitemap.xml

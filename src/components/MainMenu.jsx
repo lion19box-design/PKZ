@@ -326,6 +326,12 @@ export default function MainMenu() {
               >
                 Депеша в Секретариат
               </button>
+              <a
+                href="/pravila/"
+                style={{ color: '#9e9e9e', fontSize: '0.8rem', textDecoration: 'underline' }}
+              >
+                Правила Клуба
+              </a>
               {isLocalhost && (
                 <button 
                   type="button" 

@@ -1,8 +1,23 @@
 {
-  "rewrites": [
+  "redirects": [
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "has": [{ "type": "host", "value": "chgk-mu.vercel.app" }],
+      "destination": "https://www.pochemu-kuda-zachem.club/$1",
+      "permanent": true
+    },
+    { "source": "/pravila", "destination": "/pravila/", "permanent": true }
+  ],
+  "rewrites": [
+    { "source": "/lobby", "destination": "/index.html" },
+    { "source": "/profile", "destination": "/index.html" },
+    { "source": "/host/:roomId", "destination": "/index.html" },
+    { "source": "/expert/:roomId", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(lobby|profile|host/.*|expert/.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
     }
   ]
 }

@@ -3,14 +3,196 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Почему? Куда? Зачем? - Элитарный Клуб</title>
-    <link rel="icon" type="image/png" href="/assets/the-crystal-owl.png" />
+    <title>Почему? Куда? Зачем? — интеллектуальная онлайн-игра для компании друзей</title>
+    <meta name="description" content="Бесплатная браузерная игра по мотивам «Что? Где? Когда?» в атмосфере элитарного клуба 90-х. Крупье и 2–5 знатоков, рулетка с письмами телезрителей, Чёрный ящик и минута на обсуждение. Играйте с друзьями через Discord." />
+    <link rel="canonical" href="https://www.pochemu-kuda-zachem.club/" />
+    <meta name="theme-color" content="#0b0c10" />
+
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Превью ссылки в соцсетях и мессенджерах -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Почему? Куда? Зачем?" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:url" content="https://www.pochemu-kuda-zachem.club/" />
+    <meta property="og:title" content="Почему? Куда? Зачем? — Элитарный Клуб" />
+    <meta property="og:description" content="Интеллектуальная онлайн-игра для компании друзей: знатоки против телезрителей, рулетка, Чёрный ящик и одна минута на обсуждение." />
+    <meta property="og:image" content="https://www.pochemu-kuda-zachem.club/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Золотая люстра-табло над игровым столом Элитарного Клуба" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Почему? Куда? Зачем? — Элитарный Клуб" />
+    <meta name="twitter:description" content="Интеллектуальная онлайн-игра для компании друзей: знатоки против телезрителей, рулетка, Чёрный ящик и одна минута на обсуждение." />
+    <meta name="twitter:image" content="https://www.pochemu-kuda-zachem.club/og-image.jpg" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://www.pochemu-kuda-zachem.club/#website",
+          "url": "https://www.pochemu-kuda-zachem.club/",
+          "name": "Почему? Куда? Зачем?",
+          "alternateName": ["Элитарный Клуб", "ПКЗ"],
+          "inLanguage": "ru"
+        },
+        {
+          "@type": "VideoGame",
+          "@id": "https://www.pochemu-kuda-zachem.club/#game",
+          "name": "Почему? Куда? Зачем?",
+          "alternateName": "Элитарный Клуб",
+          "url": "https://www.pochemu-kuda-zachem.club/",
+          "image": "https://www.pochemu-kuda-zachem.club/og-image.jpg",
+          "description": "Бесплатная браузерная интеллектуальная игра по мотивам «Что? Где? Когда?». Ведущий-Крупье и команда из 2–5 знатоков играют против телезрителей до 6 очков: рулетка с 15 письмами и Чёрным ящиком, минута на обсуждение, палочки-выручалочки и финальный раунд при счёте 5:5.",
+          "inLanguage": "ru",
+          "genre": ["Викторина", "Интеллектуальная игра", "Игра для компании"],
+          "gamePlatform": "Веб-браузер",
+          "applicationCategory": "GameApplication",
+          "operatingSystem": "Любая (браузер)",
+          "playMode": "MultiPlayer",
+          "numberOfPlayers": { "@type": "QuantitativeValue", "minValue": 3, "maxValue": 6 },
+          "isAccessibleForFree": true,
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "RUB" },
+          "author": { "@type": "Person", "name": "Yehor Kudin" },
+          "isPartOf": { "@id": "https://www.pochemu-kuda-zachem.club/#website" }
+        }
+      ]
+    }
+    </script>
+
     <!-- Google Fonts for Retro-Premium look (Cyrillic-Safe) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&subset=cyrillic,latin&display=swap" rel="stylesheet">
+
+    <style>
+      /* Статическое описание клуба. Стол требует альбомной ориентации,
+         поэтому на вертикальном экране вместо стола показываем этот текст. */
+      #club-intro { display: none; }
+      @media screen and (orientation: portrait) {
+        #club-intro {
+          display: block;
+          position: fixed;
+          inset: 0;
+          z-index: 999999;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          background: radial-gradient(circle at top, #1a1a24 0%, #0b0c10 70%);
+          color: #f0e6d2;
+          font-family: 'PT Serif', Georgia, 'Times New Roman', serif;
+          line-height: 1.55;
+          padding: max(28px, env(safe-area-inset-top)) 16px max(32px, env(safe-area-inset-bottom));
+        }
+      }
+      #club-intro .ci-wrap { max-width: 560px; margin: 0 auto; }
+      #club-intro .ci-owl { display: block; width: 72px; height: 72px; margin: 0 auto 12px; border-radius: 50%; }
+      #club-intro h1 {
+        font-family: 'Playfair Display', Georgia, serif;
+        color: #d4af37;
+        text-align: center;
+        font-size: 1.9rem;
+        line-height: 1.2;
+        margin: 0;
+        text-shadow: 0 0 12px rgba(212, 175, 55, 0.45);
+      }
+      #club-intro .ci-sub {
+        text-align: center;
+        font-family: 'Playfair Display', Georgia, serif;
+        font-style: italic;
+        color: #a39b8b;
+        margin: 4px 0 22px;
+      }
+      #club-intro .ci-rotate {
+        border: 1px solid #d4af37;
+        border-radius: 8px;
+        background: rgba(212, 175, 55, 0.07);
+        padding: 14px 16px;
+        text-align: center;
+        font-family: 'Golos Text', -apple-system, 'Segoe UI', Roboto, sans-serif;
+        font-size: 0.95rem;
+        margin-bottom: 24px;
+      }
+      #club-intro .ci-rotate strong { color: #d4af37; }
+      #club-intro h2 {
+        font-family: 'Playfair Display', Georgia, serif;
+        color: #d4af37;
+        font-size: 1.25rem;
+        margin: 26px 0 8px;
+      }
+      #club-intro p, #club-intro li { color: #d8cfbd; font-size: 1rem; }
+      #club-intro ul, #club-intro ol { padding-left: 20px; margin: 8px 0; }
+      #club-intro li { margin-bottom: 6px; }
+      #club-intro a { color: #d4af37; }
+      #club-intro .ci-cta {
+        display: block;
+        text-align: center;
+        margin: 28px 0 8px;
+        padding: 12px;
+        border: 1px solid #d4af37;
+        border-radius: 8px;
+        font-family: 'Golos Text', -apple-system, 'Segoe UI', Roboto, sans-serif;
+        font-weight: 600;
+        text-decoration: none;
+      }
+      #club-intro footer {
+        margin-top: 24px;
+        text-align: center;
+        font-size: 0.85rem;
+        color: #a39b8b;
+      }
+    </style>
   </head>
   <body>
+    <main id="club-intro">
+      <div class="ci-wrap">
+        <img class="ci-owl" src="/favicon-192.png" width="72" height="72" alt="Хрустальная сова — символ Элитарного Клуба" />
+        <h1>Почему? Куда? Зачем?</h1>
+        <p class="ci-sub">Элитарный клуб знатоков</p>
+
+        <p class="ci-rotate">
+          Игровой стол открывается в <strong>альбомной ориентации</strong>.<br />
+          Поверните устройство, чтобы занять место за столом.
+        </p>
+
+        <p>
+          <strong>«Почему? Куда? Зачем?»</strong> — бесплатная браузерная интеллектуальная игра по мотивам
+          «Что? Где? Когда?» для компании друзей. Полумрак, сукно, хрусталь и красные пиджаки:
+          атмосфера элитарного клуба 90-х, где соревнуются умы, а не кошельки. Установка не нужна:
+          игра работает в браузере на компьютере, планшете и телефоне.
+        </p>
+
+        <h2>Как собраться за столом</h2>
+        <ol>
+          <li>Соберитесь с друзьями в голосовом чате, например в Discord: вопросы читаются и обсуждаются голосом.</li>
+          <li>Один игрок становится Ведущим (Крупье) и открывает стол с четырёхзначным кодом.</li>
+          <li>От двух до пяти Знатоков входят по этому коду, выбирают Капитана и нажимают «Готов».</li>
+        </ol>
+
+        <h2>Как идёт игра</h2>
+        <ul>
+          <li>Знатоки играют против телезрителей до <strong>6 очков</strong>.</li>
+          <li>Рулетка на 16 секторов: 15 писем телезрителей и зелёный сектор <strong>Чёрного ящика</strong>, в котором нужно угадать спрятанный предмет.</li>
+          <li>На обсуждение — ровно <strong>одна минута</strong>. После гонга Капитан называет, кто отвечает.</li>
+          <li>Три палочки-выручалочки — Минута в кредит, Помощь Клуба и Помощь Ведущего — по одному разу за игру.</li>
+          <li>При счёте <strong>5:5</strong> начинается Финальный раунд: подсказки сгорают, остаётся только Минута в кредит.</li>
+          <li>Крупье следит за честностью: за подсказки из интернета — штрафы, вплоть до удаления из-за стола.</li>
+        </ul>
+
+        <h2>Регалии клуба</h2>
+        <p>
+          Сыгранные партии и победы сохраняются в профиле. За победы вручаются ордена и статуэтки
+          Хрустальной и Бриллиантовой совы, а знатоков отличают шапки и аватары.
+        </p>
+
+        <a class="ci-cta" href="/pravila/">Полный свод правил Клуба</a>
+
+        <footer>Автор проекта — Yehor Kudin</footer>
+      </div>
+    </main>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
