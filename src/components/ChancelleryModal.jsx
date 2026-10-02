@@ -71,7 +71,7 @@ export default function ChancelleryModal({ isOpen, onClose }) {
       <div className="chancellery-card" onClick={(e) => e.stopPropagation()}>
         <div className="chancellery-header">
           <div className="chancellery-title-wrap">
-            <img src="/assets/skarabey.png" alt="Скарабей" style={{ width: '32px', height: '32px' }} />
+            <img src="/assets/skarabey.webp" alt="Скарабей" style={{ width: '32px', height: '32px' }} />
             <div>
               <h3 className="chancellery-title">Канцелярия Клуба: Реестр депеш</h3>
               <div className="chancellery-subtitle">Служебный архив обращений, замечаний и казусов (Локальный доступ)</div>

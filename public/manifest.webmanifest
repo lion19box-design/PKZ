@@ -1,0 +1,17 @@
+{
+  "name": "Почему? Куда? Зачем? — Элитарный Клуб",
+  "short_name": "ПКЗ",
+  "description": "Интеллектуальная онлайн-игра по мотивам «Что? Где? Когда?» для компании друзей.",
+  "lang": "ru",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0b0c10",
+  "theme_color": "#0b0c10",
+  "categories": ["games", "entertainment", "education"],
+  "icons": [
+    { "src": "/favicon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/favicon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

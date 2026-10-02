@@ -11,6 +11,8 @@ export default defineConfig({
         main: resolve(import.meta.dirname, 'index.html'),
         pravila: resolve(import.meta.dirname, 'pravila/index.html'),
         oIgre: resolve(import.meta.dirname, 'o-igre/index.html'),
+        invite: resolve(import.meta.dirname, 'invite.html'),
+        kakIgrat: resolve(import.meta.dirname, 'kak-igrat/index.html'),
       },
     },
   },

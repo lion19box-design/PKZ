@@ -81,7 +81,7 @@ export default function DispatchModal({
       <div className="dispatch-modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="dispatch-modal-header">
           <div className="dispatch-modal-title-wrap">
-            <img src="/assets/skarabey.png" alt="Скарабей" className="dispatch-scarab-icon" />
+            <img src="/assets/skarabey.webp" alt="Скарабей" className="dispatch-scarab-icon" />
             <h3 className="dispatch-modal-title">{modalTitle}</h3>
           </div>
           <button 

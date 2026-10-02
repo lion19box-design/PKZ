@@ -1,7 +1,7 @@
 .lobby-fullscreen {
   width: 100%;
   height: 100vh;
-  background-image: url('/assets/chgk-asset-lobby.png');
+  background-image: url('/assets/chgk-asset-lobby.webp');
   background-size: cover;
   background-position: center;
   position: relative;
@@ -113,7 +113,7 @@
 
 .host-photo {
   height: 250px;
-  background-image: url('/assets/chgk-asset-krupie.png');
+  background-image: url('/assets/chgk-asset-krupie.webp');
   background-size: cover;
   background-position: top center;
   border-bottom: 2px solid var(--accent-gold);

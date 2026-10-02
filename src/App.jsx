@@ -8,6 +8,7 @@ import ExpertView from './components/ExpertView';
 import { EliteNotificationProvider } from './components/EliteNotification';
 import GlobalAudio from './components/GlobalAudio';
 import Profile from './components/Profile';
+import InviteRedirect from './components/InviteRedirect';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="/host/:roomId" element={<HostView />} />
           <Route path="/expert/:roomId" element={<ExpertView />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/stol/:roomId" element={<InviteRedirect />} />
         </Routes>
       </div>
     </EliteNotificationProvider>

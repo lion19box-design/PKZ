@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAudio } from '../utils/useAudio';
 import { SERVER_URL } from '../socket';
 import './Profile.css';
 import { getHatStyle } from '../utils/hatConfig';
@@ -50,8 +51,8 @@ export default function Profile() {
   
   const [currentAwardObj, setCurrentAwardObj] = useState(null);
   
-  const audioRef = useRef(new Audio("/assets/audio/elitist-music/Le Cercle de l'Elite.mp3"));
-  const awardAudioRef = useRef(new Audio("/assets/audio/sound-effects/awarding-of-the-prize.mp3"));
+  const audioRef = useAudio("/assets/audio/elitist-music/Le Cercle de l'Elite.mp3");
+  const awardAudioRef = useAudio("/assets/audio/sound-effects/awarding-of-the-prize.mp3");
   
   const navigate = useNavigate();
   const username = localStorage.getItem('chgk_username');

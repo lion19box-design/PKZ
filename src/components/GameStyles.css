@@ -154,7 +154,7 @@
 .roulette-table {
   width: 500px;
   height: 500px;
-  background: url('/assets/Roulette-asset.png') center/contain no-repeat;
+  background: url('/assets/Roulette-asset.webp') center/contain no-repeat;
   border-radius: 50%;
   position: relative;
   display: flex;

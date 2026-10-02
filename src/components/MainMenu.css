@@ -448,6 +448,26 @@
 }
 
 /* --- Mobile Landscape Media Queries for Main Menu --- */
+/* Приглашение за стол и короткое описание игры под заголовком */
+.invite-banner,
+.menu-about {
+  max-width: 420px;
+  margin: -1.2rem auto 1.4rem;
+  font-family: var(--font-question);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.invite-banner {
+  padding: 8px 14px;
+  border: 1px solid var(--accent-gold);
+  border-radius: var(--border-radius);
+  background: rgba(212, 175, 55, 0.08);
+  color: var(--text-main);
+}
+
+
 @media (max-height: 600px) and (orientation: landscape), (max-width: 950px) and (orientation: landscape) {
   .glass-panel {
     padding: 0.8rem 1.8rem;
@@ -471,6 +491,16 @@
     font-size: 1.45rem;
     margin-bottom: 2px;
     line-height: 1.1;
+  }
+
+  .menu-about {
+    display: none;
+  }
+
+  .invite-banner {
+    margin: -0.4rem auto 0.6rem;
+    padding: 4px 10px;
+    font-size: 0.75rem;
   }
 
   .game-subtitle {

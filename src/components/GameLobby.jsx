@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAudio } from '../utils/useAudio';
 import { socket } from '../socket';
 import { useEliteNotification } from './EliteNotification';
 import { getHatStyle } from '../utils/hatConfig';
+import { inviteUrl, shareOrCopy } from '../utils/invite';
 import './GameLobby.css';
 
 export default function GameLobby({ role, roomId, room, playedQuestionsText, onPlayedQuestionsChange, onStart }) {
@@ -15,8 +17,8 @@ export default function GameLobby({ role, roomId, room, playedQuestionsText, onP
   const isReady = myPlayer ? myPlayer.ready : false;
 
   // Audio refs
-  const lobbyMusicRef = useRef(new Audio("/assets/audio/elitist-music/A Znatok Knows....mp3"));
-  const triumphSoundRef = useRef(new Audio("/assets/audio/sound-effects/hey-triumph.mp3"));
+  const lobbyMusicRef = useAudio("/assets/audio/elitist-music/A Znatok Knows....mp3");
+  const triumphSoundRef = useAudio("/assets/audio/sound-effects/hey-triumph.mp3");
 
   const [triumphModalOpen, setTriumphModalOpen] = useState(false);
 
@@ -55,6 +57,16 @@ export default function GameLobby({ role, roomId, room, playedQuestionsText, onP
   const handleCopy = () => {
     navigator.clipboard.writeText(playedQuestionsText);
     showAlert('Номера скопированы!');
+  };
+
+  const handleInvite = async () => {
+    const result = await shareOrCopy({
+      title: 'Почему? Куда? Зачем?',
+      text: `Приглашаю за стол Элитарного Клуба «Почему? Куда? Зачем?». Код стола: ${roomId}`,
+      url: inviteUrl(roomId),
+    });
+    if (result === 'copied') showAlert('Ссылка-приглашение скопирована. Отправьте её знатокам — например, в Discord.', 'Приглашение');
+    if (result === 'failed') showAlert(`Скопируйте ссылку вручную: ${inviteUrl(roomId)}`, 'Приглашение');
   };
 
   const handlePaste = async () => {
@@ -130,6 +142,11 @@ export default function GameLobby({ role, roomId, room, playedQuestionsText, onP
       {/* Центральный список знатоков */}
       <div className="lobby-experts-list glass-box">
         <h3 style={{ textAlign: 'center' }}>Список знатоков (Код: {roomId})</h3>
+        <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+          <button className="control-btn" onClick={handleInvite} title="Ссылка открывает игру сразу с кодом этого стола">
+            Пригласить по ссылке
+          </button>
+        </div>
         <div className="experts-grid">
           {players.map((exp, i) => (
             <div key={i} className="expert-item">

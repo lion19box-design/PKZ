@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAudio } from '../utils/useAudio';
 import { SERVER_URL } from '../socket';
 import { useEliteNotification } from './EliteNotification';
 import DispatchModal from './DispatchModal';
 import ChancelleryModal from './ChancelleryModal';
+import { peekPendingInvite } from '../utils/invite';
 import './MainMenu.css';
 
 export default function MainMenu() {
@@ -13,6 +15,7 @@ export default function MainMenu() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
+  const [pendingInvite] = useState(() => peekPendingInvite());
 
   const isLocalhost = typeof window !== 'undefined' && (
     window.location.hostname === 'localhost' || 
@@ -49,11 +52,11 @@ export default function MainMenu() {
   const clickTimeoutRef = useRef(null);
 
   // Audio refs
-  const mainAudioRef = useRef(new Audio("/assets/audio/elitist-music/The Owl's Lounge.mp3"));
-  const modalAudioRef = useRef(new Audio("/assets/audio/elitist-music/Ode alla Mente.mp3"));
-  const customAudioRef = useRef(new Audio("/assets/audio/elitist-music/Le Cercle de l'Elite.mp3"));
-  const flightAudioRef = useRef(new Audio("/assets/audio/elitist-music/Flight with the Crystal Owl.mp3"));
-  const lightningAudioRef = useRef(new Audio("/assets/audio/sound-effects/owl-disturbed-lightning.mp3"));
+  const mainAudioRef = useAudio("/assets/audio/elitist-music/The Owl's Lounge.mp3");
+  const modalAudioRef = useAudio("/assets/audio/elitist-music/Ode alla Mente.mp3");
+  const customAudioRef = useAudio("/assets/audio/elitist-music/Le Cercle de l'Elite.mp3");
+  const flightAudioRef = useAudio("/assets/audio/elitist-music/Flight with the Crystal Owl.mp3");
+  const lightningAudioRef = useAudio("/assets/audio/sound-effects/owl-disturbed-lightning.mp3");
 
   const navigate = useNavigate();
 
@@ -168,6 +171,7 @@ export default function MainMenu() {
     e.preventDefault();
     if (await performAuth()) {
       setIsLoggedIn(true);
+      if (pendingInvite) navigate('/lobby');
     }
   };
 
@@ -181,6 +185,7 @@ export default function MainMenu() {
         setUsername(guestName);
         setIsGuest(true);
         setIsLoggedIn(true);
+        if (pendingInvite) navigate('/lobby');
       },
       null,
       'Гостевой визит',
@@ -200,7 +205,7 @@ export default function MainMenu() {
 
   const handleProfileClick = () => {
     if (isGuest) {
-      showAlert('Личная гардеробная и коллекция сов открывают свои двери только действительным членам Клуба с именной карточкой. Извольте войти в аккаунт или зарегистрироваться!', 'Канцелярия Клуба');
+      showAlert('Личная гардеробная и коллекция наград открывают свои двери только действительным членам Клуба с именной карточкой. Извольте войти в аккаунт или зарегистрироваться!', 'Канцелярия Клуба');
       return;
     }
     navigate('/profile');
@@ -222,7 +227,7 @@ export default function MainMenu() {
     }
   };
 
-  const owlSrc = isDisturbed ? "/assets/the-crystal-owl-disturbed.png" : "/assets/the-crystal-owl.png";
+  const owlSrc = isDisturbed ? "/assets/the-crystal-owl-disturbed.webp" : "/assets/the-crystal-owl.webp";
 
   return (
     <div className="main-menu">
@@ -237,6 +242,20 @@ export default function MainMenu() {
         </div>
         <h1 className="game-title">Почему? Куда? Зачем?</h1>
         <h2 className="game-subtitle">Элитарный клуб</h2>
+
+        {pendingInvite && (
+          <p className="invite-banner">
+            Вас пригласили за стол <span className="highlight-gold">{pendingInvite}</span>.
+            {isLoggedIn ? ' Нажмите «Играть», чтобы занять место.' : ' Войдите, чтобы занять место.'}
+          </p>
+        )}
+
+        {!isLoggedIn && !pendingInvite && (
+          <p className="menu-about">
+            Бесплатная онлайн-игра по мотивам «Что? Где? Когда?» для компании друзей:
+            Крупье и 2–5 знатоков против телезрителей, рулетка и минута на обсуждение.
+          </p>
+        )}
 
         {isLoggedIn ? (
           <div className="logged-in-menu">
@@ -369,7 +388,7 @@ export default function MainMenu() {
               <img src="/assets/icons/money-bag.svg" alt="donate" className="menu-icon" /> Донат
             </button>
             <button onClick={() => setActiveModal('dispatch')} className="icon-btn" title="Секретариат Клуба (Обратная связь)">
-              <img src="/assets/skarabey.png" alt="Секретариат" className="menu-icon" style={{ objectFit: 'contain' }} /> Секретариат
+              <img src="/assets/skarabey.webp" alt="Секретариат" className="menu-icon" style={{ objectFit: 'contain' }} /> Секретариат
             </button>
             {isLocalhost && (
               <button 

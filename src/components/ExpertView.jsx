@@ -7,6 +7,7 @@ import GameLobby from './GameLobby';
 import VolumeControl from './VolumeControl';
 import { useEliteNotification } from './EliteNotification';
 import DispatchModal from './DispatchModal';
+import ShareResult from './ShareResult';
 import './GameStyles.css';
 
 export default function ExpertView() {
@@ -146,6 +147,7 @@ export default function ExpertView() {
         <div className="glass-box" style={{ width: '500px', textAlign: 'center', padding: '30px' }}>
           <h2 style={{ fontSize: '2rem', marginBottom: '20px', color: 'var(--accent-gold)' }}>ИГРА ОКОНЧЕНА</h2>
           <p style={{ fontSize: '1.2rem', marginBottom: '20px' }}>Счет: Знатоки {room.score.experts} - {room.score.viewers} Зрители</p>
+          <ShareResult score={room.score} />
           
           <h3 style={{ borderBottom: 'none' }}>Пул сыгранных вопросов</h3>
           <p style={{ fontSize: '0.9rem', color: '#ccc', marginBottom: '10px' }}>
@@ -188,7 +190,7 @@ export default function ExpertView() {
   }
 
   return (
-    <div className="game-container expert-view" style={{ backgroundImage: "url('/assets/chgk-asset-background-16on9.png')" }}>
+    <div className="game-container expert-view" style={{ backgroundImage: "url('/assets/chgk-asset-background-16on9.webp')" }}>
       
       {needsAudioUnlock && (
         <div style={{
@@ -370,7 +372,7 @@ export default function ExpertView() {
           <div 
             className="expert-viewer-photo"
             style={{ 
-              backgroundImage: `url("${(room.currentQuestion && !isSpinning) ? room.currentQuestion.photoUrl : '/assets/zaglushka.png'}")`
+              backgroundImage: `url("${(room.currentQuestion && !isSpinning) ? room.currentQuestion.photoUrl : '/assets/zaglushka.webp'}")`
             }}
           ></div>
           <div style={{ padding: '8px' }}>
@@ -519,7 +521,7 @@ export default function ExpertView() {
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           title="Апелляция к Распорядителю (Сообщить о неполадке)"
         >
-          <img src="/assets/skarabey.png" alt="Скарабей" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+          <img src="/assets/skarabey.webp" alt="Скарабей" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
         </button>
 
         <VolumeControl style={{ position: 'relative', bottom: 'auto', left: 'auto', zIndex: 'auto' }} />

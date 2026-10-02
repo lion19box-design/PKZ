@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { socket } from '../socket';
 import { useEliteNotification } from './EliteNotification';
+import { peekPendingInvite, clearPendingInvite } from '../utils/invite';
 import './Lobby.css';
 
 export default function Lobby() {
@@ -52,32 +53,47 @@ export default function Lobby() {
     };
   }, [navigate, showAlert]);
 
-  const handleJoinRoom = (e) => {
-    e.preventDefault();
-    if (joinCode.length !== 4) {
-      showAlert('Шифр игрового стола должен состоять ровно из 4 цифр!', 'Зал Ожидания');
-      return;
-    }
-    
+  const joinRoom = (code, name) => {
     const isGuest = localStorage.getItem('chgk_is_guest') === 'true';
-    socket.emit('joinRoom', { roomId: joinCode, username, isGuest }, (response) => {
+    socket.emit('joinRoom', { roomId: code, username: name, isGuest }, (response) => {
       if (response && response.success) {
-        if (response.assignedUsername && response.assignedUsername !== username) {
+        if (response.assignedUsername && response.assignedUsername !== name) {
           localStorage.setItem('chgk_username', response.assignedUsername);
           setUsername(response.assignedUsername);
         }
         if (response.status === 'pending') {
            setIsPending(true);
         } else if (response.isHost) {
-           navigate(`/host/${joinCode}`);
+           navigate(`/host/${code}`);
         } else {
-           navigate(`/expert/${joinCode}`);
+           navigate(`/expert/${code}`);
         }
       } else {
         showAlert(response?.error || 'Не удалось занять место за столом. Проверьте шифр комнаты.', 'Зал Ожидания');
       }
     });
   };
+
+  const handleJoinRoom = (e) => {
+    e.preventDefault();
+    if (joinCode.length !== 4) {
+      showAlert('Шифр игрового стола должен состоять ровно из 4 цифр!', 'Зал Ожидания');
+      return;
+    }
+    joinRoom(joinCode, username);
+  };
+
+  // Пришли по ссылке-приглашению: подставляем код и один раз стучимся за стол
+  const inviteHandled = useRef(false);
+  useEffect(() => {
+    if (!username || inviteHandled.current) return;
+    const inviteCode = peekPendingInvite();
+    if (!inviteCode) return;
+    inviteHandled.current = true;
+    clearPendingInvite();
+    setJoinCode(inviteCode);
+    joinRoom(inviteCode, username);
+  }, [username]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="lobby-container">

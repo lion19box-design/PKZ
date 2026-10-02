@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Отдается на /stol/:код (см. vercel.json): то же приложение, но с превью-приглашением -->
+    <title>Приглашение за стол — Почему? Куда? Зачем?</title>
+    <meta name="description" content="Вас приглашают за стол Элитарного Клуба «Почему? Куда? Зачем?» — интеллектуальной онлайн-игры по мотивам «Что? Где? Когда?». Откройте ссылку, войдите и займите место среди знатоков." />
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#0b0c10" />
+
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Почему? Куда? Зачем?" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:title" content="Вас приглашают за стол Элитарного Клуба" />
+    <meta property="og:description" content="«Почему? Куда? Зачем?» — знатоки против телезрителей, рулетка, Чёрный ящик и одна минута на обсуждение. Откройте ссылку, чтобы занять место за столом." />
+    <meta property="og:image" content="https://www.pochemu-kuda-zachem.club/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Золотая люстра-табло над игровым столом Элитарного Клуба" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Вас приглашают за стол Элитарного Клуба" />
+    <meta name="twitter:image" content="https://www.pochemu-kuda-zachem.club/og-image.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&subset=cyrillic,latin&display=swap" rel="stylesheet">
+
+    <style>
+      /* Стол требует альбомной ориентации */
+      #rotate-hint { display: none; }
+      @media screen and (orientation: portrait) {
+        #rotate-hint {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          position: fixed;
+          inset: 0;
+          z-index: 999999;
+          padding: 16px;
+          text-align: center;
+          background: radial-gradient(circle at center, #1a1a24 0%, #0b0c10 100%);
+          color: #d8cfbd;
+          font-family: 'PT Serif', Georgia, 'Times New Roman', serif;
+          line-height: 1.5;
+        }
+      }
+      #rotate-hint img { width: 84px; height: 84px; border-radius: 50%; margin-bottom: 16px; }
+      #rotate-hint h1 { font-family: 'Playfair Display', Georgia, serif; color: #d4af37; font-size: 1.6rem; margin: 0 0 10px; }
+      #rotate-hint p { max-width: 340px; margin: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="rotate-hint">
+      <img src="/favicon-192.png" width="84" height="84" alt="Хрустальный бегемот — символ Элитарного Клуба" />
+      <h1>Вас пригласили за стол</h1>
+      <p>Поверните устройство горизонтально, чтобы войти в Элитарный Клуб и занять место среди знатоков.</p>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
