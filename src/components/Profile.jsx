@@ -6,25 +6,25 @@ import { getHatStyle } from '../utils/hatConfig';
 
 const AWARDS_CONFIG = {
   1: {
-    title: 'Орден Хрустальной Совы',
+    title: 'Орден Хрустального Бегемота',
     desc: 'За первую победу в элитарном клубе.',
     ceremonyImg: '/assets/awards/crystal-owl-awards-ceremony.png',
     iconImg: '/assets/awards/orden-crystal-owl-2d-asset.png',
   },
   3: {
-    title: 'Хрустальная Сова',
+    title: 'Хрустальный Бегемот',
     desc: 'За 3 победы.',
     ceremonyImg: '/assets/awards/crystal-owl-figurine-ceremony.png',
     iconImg: '/assets/awards/crystal-owl-2d-asset.png',
   },
   5: {
-    title: 'Орден Бриллиантовой Совы',
+    title: 'Орден Бриллиантового Бегемота',
     desc: 'За 5 побед.',
     ceremonyImg: '/assets/awards/diamond-owl-awards-ceremony.png',
     iconImg: '/assets/awards/orden-diamond-owl-2d-asset.png',
   },
   10: {
-    title: 'Бриллиантовая Сова',
+    title: 'Бриллиантовый Бегемот',
     desc: 'За 10 побед. Выдающееся достижение.',
     ceremonyImg: '/assets/awards/diamond-owl-figurine-ceremony.png',
     iconImg: '/assets/awards/diamond-owl-2d-asset.png',

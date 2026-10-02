@@ -230,7 +230,7 @@ export default function MainMenu() {
         <div className="owl-avatar-container">
           <img 
             src={owlSrc} 
-            alt="Хрустальная сова" 
+            alt="Хрустальный бегемот" 
             onClick={handleOwlClick}
             className={`owl-avatar ${isDisturbed ? 'disturbed' : ''}`}
           />
@@ -331,6 +331,12 @@ export default function MainMenu() {
                 style={{ color: '#9e9e9e', fontSize: '0.8rem', textDecoration: 'underline' }}
               >
                 Правила Клуба
+              </a>
+              <a
+                href="/o-igre/"
+                style={{ color: '#9e9e9e', fontSize: '0.8rem', textDecoration: 'underline' }}
+              >
+                Об игре
               </a>
               {isLocalhost && (
                 <button 

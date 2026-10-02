@@ -10,6 +10,7 @@ export default defineConfig({
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
         pravila: resolve(import.meta.dirname, 'pravila/index.html'),
+        oIgre: resolve(import.meta.dirname, 'o-igre/index.html'),
       },
     },
   },

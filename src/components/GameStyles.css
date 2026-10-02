@@ -327,6 +327,9 @@
 .expert-viewer-photo {
   height: 240px;
   border-bottom: 2px solid var(--accent-gold);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center 15%;
 }
 
 .expert-hints-box {

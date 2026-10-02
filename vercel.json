@@ -6,7 +6,8 @@
       "destination": "https://www.pochemu-kuda-zachem.club/$1",
       "permanent": true
     },
-    { "source": "/pravila", "destination": "/pravila/", "permanent": true }
+    { "source": "/pravila", "destination": "/pravila/", "permanent": true },
+    { "source": "/o-igre", "destination": "/o-igre/", "permanent": true }
   ],
   "rewrites": [
     { "source": "/lobby", "destination": "/index.html" },
